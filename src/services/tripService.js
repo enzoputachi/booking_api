@@ -1,7 +1,21 @@
 import prisma from "../models/index.js";
+import { createSeat } from "./seatService.js";
 
 const createTrip = async(validatedTripdata) => {
-    return await prisma.trip.create({ data: validatedTripdata })
+    const { busId } = validatedTripdata;
+
+    return await prisma.$transaction(async (tx) => {
+        const bus = await tx.bus.findUnique({ where: { id: busId} });
+
+        if (!bus) throw new Error("Bus not found")
+
+        const trip = await tx.trip.create({ data: validatedTripdata })
+
+        const validatedSeatdata = { tripId: trip.id, capacity: bus.capacity, seatsPerRow: bus.seatsPerRow}
+        await createSeat(validatedSeatdata, tx)
+
+        return trip;
+    })
 }
 
 const getTrip = async(tripId = '') => {
