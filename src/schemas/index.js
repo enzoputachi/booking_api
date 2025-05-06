@@ -27,6 +27,7 @@ const BusSchema = z.object({
   id: z.number().int().positive(),
   plateNo: z.string(),
   capacity: z.number().int().positive(),
+  seatsPerRow: z.number().int().positive(),
 });
 
 // =================== TRIP ===================
@@ -104,19 +105,33 @@ const AdminActivityLogSchema = z.object({
   timestamp: z.coerce.date(),
 });
 
+
+
+// ******************************
+const TripCreateSchema = TripSchema.omit({ id: true });
+const BusCreateSchema = BusSchema.omit({ id: true });
+const UserCreateSchema = UserSchema.omit({ id: true });
+const RouteCreateSchema = RouteSchema.omit({ id: true });
+const SeatCreateSchema = SeatSchema.omit({ id: true });
+const BookingCreateSchema = BookingSchema.omit({ id: true });
+const BookingLogCreateSchema = BookingLogSchema.omit({ id: true });
+const NotificationCreateSchema = NotificationSchema.omit({ id: true });
+const AdminActivityLogCreateSchema = AdminActivityLogSchema.omit({ id: true });
+const PaymentCreateSchema = PaymentSchema.omit({ id: true });
+
 export {
   Role,
   BookingStatus,
   SeatStatus,
   PaymentStatus,
-  UserSchema,
-  RouteSchema,
-  BusSchema,
-  TripSchema,
-  SeatSchema,
-  BookingSchema,
-  PaymentSchema,
-  BookingLogSchema,
-  NotificationSchema,
-  AdminActivityLogSchema,
+  UserCreateSchema,
+  RouteCreateSchema,
+  BusCreateSchema,
+  TripCreateSchema,
+  SeatCreateSchema,
+  BookingCreateSchema,
+  PaymentCreateSchema,
+  BookingLogCreateSchema,
+  NotificationCreateSchema,
+  AdminActivityLogCreateSchema,
 };
