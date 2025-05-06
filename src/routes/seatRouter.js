@@ -5,10 +5,12 @@ import {
   handleGetSeat,
   handleUpdateSeat,
 } from "../controllers/seatController.js";
+import validateSchema from '../middilewares/validate.js';
+import { SeatCreateSchema } from '../schemas/index.js';
 
 const router = express.Router();
 
-router.post('/', handleCreateSeat);
+router.post('/', validateSchema(SeatCreateSchema), handleCreateSeat);
 router.get('/', handleGetSeat);
 router.patch('/', handleUpdateSeat);
 router.delete('/', handleDeleteSeat);
