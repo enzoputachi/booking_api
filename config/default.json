@@ -1,0 +1,13 @@
+{
+    "PORT": 3000,
+    "MYSQL": {
+      "HOST": "localhost",
+      "USER": "root",
+      "PASS": "secret",
+      "DB":   "bus_booking"
+    },
+    "MONGO_URI": "mongodb://localhost:27017/bus_booking",
+    "REDIS_URL": "redis://localhost:6379",
+    "JWT_SECRET": "change_me"
+  }
+  

@@ -1,1 +1,5 @@
 node_modules
+prisma/src/generated/prisma
+.env
+prisma
+Design.md

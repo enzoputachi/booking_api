@@ -1,6 +1,12 @@
 import prisma from "../models/index.js";
+import { redlock } from "../models/redis.js";
 
-const createSeat = async(validatedSeatdata, client = prisma) => {
+
+// ================================================ //
+//                      CORE FEATURES               //
+//================================================= //
+
+const createSeat = async({validatedSeatdata, db = prisma}) => {
     const { tripId, capacity, seatsPerRow } = validatedSeatdata;
     const seatNumbers = generateSeatNumbers(capacity, seatsPerRow)
     
@@ -11,35 +17,37 @@ const createSeat = async(validatedSeatdata, client = prisma) => {
     }))
 
     try {
-        return await client.seat.createMany({ data: seats, skipDuplicates: true })
+        return await db.seat.createMany({ data: seats, skipDuplicates: true })
     } catch (error) {
         console.error("Failed to create seats:", err.message);
         throw err;
     }
 }
 
-const getSeat = async(seatId = '') => {
+const getSeatById = async({seatId, db = prisma}) => {
+    if (!seatId) throw new Error('No seat Id')
 
-    if (seatId) {
-        return await prisma.seat.findUnique({
-            where: {id: seatId}
-        })
-    }
+    const seat = await db.seat.findUnique({
+        where: {id: seatId}
+    })
 
-    return await prisma.seat.findMany();
+    return seat;
 }
 
+const getAllSeats = async({ filter = {}, include = null} = {}, db = prisma) => {
+    const seats = await db.seat.findMany({ where: filter, include: include || undefined });
+    return seats;
+}
 
-const updateSeat = async(seatId, data) => {
-    return await prisma.seat.update({
+const updateSeat = async({ seatId, data, db = prisma }) => {
+    return await db.seat.update({
         where: { id: seatId },
         data,
     })
 }
 
-
-const deleteSeat = async(seatId) => {
-    return await prisma.seat.delete({
+const deleteSeat = async(seatId, db = prisma) => {
+    return await db.seat.delete({
         where: { id: seatId }
     })
 }
@@ -61,9 +69,63 @@ const generateSeatNumbers = (capacity = 18, seatsPerRow = 4) => {
     return seats;
 }
 
+// ================================================ //
+//                 USER-FACING FEATURES             //
+//================================================= //
+
+const findAvailableSeats = async(tripId, db = prisma) => {
+    const availableSeats = await getAllSeats(
+        { tripId,  status: 'AVAILABLE'}, 
+        db
+    )
+    return availableSeats;
+}
+
+const reserveSeat = async(tripId, seatId, db = prisma) => {
+    const lockKey = `lock:seat:${seatId}`;
+    const lock = await redlock.acquire([lockKey], (1000 * 20));
+
+    try {
+        const seat = await getSeatById(seatId, db);
+        if (!seat || seat.tripId !== tripId) throw new Error('Seat not found')
+
+        const now = new Date();
+
+        if (seat.status === 'RESERVED') {
+            const expired = seat.reservedAt && new Date(seat.reservedAt.getTime() + RESERVATION_EXPIRY_MINUTES * 60000) < now;
+
+            if (!expired) throw new Error('Seat already reserved')
+        }
+
+        if (seat.status === 'BOOKED') throw new Error ('Seat already booked')
+
+        return await db.seat.update({
+            where: { id: seatId },
+            data: {
+                status: 'RESERVED',
+                reservedAt: now,
+            },
+        });
+    } finally {
+        await lock.release();
+    }   
+}
+
+const confirmSeat = async(seatId, db = prisma) => {
+    return await updateSeat({
+        seatId, 
+        data: {status: 'BOOKED'},
+        db
+    })
+}
+
 export {
     createSeat,
-    getSeat,
+    getSeatById,
+    getAllSeats,
     updateSeat,
     deleteSeat,
+    reserveSeat,
+    findAvailableSeats,
+    confirmSeat
 }
