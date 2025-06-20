@@ -4,29 +4,32 @@ import prisma from "../models/index.js";
   destination String
   distanceKm  Float */
 
-const createRoute = async(validatedRouteData) => {
-    const route = await prisma.route.create({ data: validatedRouteData });
+const createRoute = async(validatedRouteData, db = prisma) => {
+    const route = await db.route.create({ data: validatedRouteData });
     return route;
 }
 
-const getRoute = async(routeId = '') => {
+const getAllRoutes = async(db = prisma) => {
 
-    if (routeId) {
-        const route = await prisma.route.findUnique({
-            where: { id: routeId }
-        })
-
-        return route;
-    }
-
-    const allRoutes = await prisma.route.findMany();
+    const allRoutes = await db.route.findMany();
     return allRoutes;
 
 }
 
 
-const updateRoute = async(routeId, data) => {
-    const updatedRoute = await prisma.route.update({
+const getRouteById = async(routeId, db = prisma) => {
+    if (!routeId) return null;
+
+    const route = await db.route.findUnique({
+        where: { id: routeId }
+    })
+
+    return route;
+}
+
+
+const updateRoute = async(routeId, data, db = prisma) => {
+    const updatedRoute = await db.route.update({
         where: { id: routeId },
         data,
     });
@@ -34,8 +37,8 @@ const updateRoute = async(routeId, data) => {
     return updatedRoute;
 }
 
-const deleteRoute = async(routeId) => {
-    return await prisma.route.delete({
+const deleteRoute = async(routeId, db = prisma) => {
+    return await db.route.delete({
         where: { id: routeId}
     })
 }
@@ -43,7 +46,8 @@ const deleteRoute = async(routeId) => {
 
 export { 
     createRoute, 
-    getRoute,
+    getAllRoutes,
+    getRouteById,
     updateRoute,
     deleteRoute
 }
