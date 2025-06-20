@@ -1,7 +1,8 @@
 import {
   createRoute,
   deleteRoute,
-  getRoute,
+  getAllRoutes,
+  getRouteById,
   updateRoute,
 } from "../services/routeService.js";
 
@@ -23,10 +24,9 @@ const handleCreateRoute = async (req, res) => {
   }
 };
 
-const handleGetRoute = async (req, res) => {
+const handleGetAllRoutes = async (req, res) => {
   try {
-    const validatedRouteData = req.body;
-    const routes = await getRoute(validatedRouteData);
+    const routes = await getAllRoutes();
     res.status(200).json({
       status: "success",
       data: routes,
@@ -43,10 +43,35 @@ const handleGetRoute = async (req, res) => {
   }
 };
 
+
+const handleGetRouteById = async (req, res) => {
+  try {
+    const routeId =  parseInt(req.params.routeId, 10);
+
+    const route = await getRouteById( routeId );
+    res.status(200).json({
+      status: "success",
+      data: route,
+    });
+  } catch (error) {
+    console.error(
+      "Error fetching route:",
+      error?.route?.data || error.message
+    );
+    res.status(500).json({
+      message: "Error fetching route",
+      error: error?.route?.data || error.message,
+    });
+  }
+};
+
+
 const handleUpdateRoute = async (req, res) => {
   try {
-    const validatedRouteData = req.body;
-    const updatedRoutes = await updateRoute(validatedRouteData);
+    const routeId =  parseInt(req.params.routeId, 10);
+    const updateData = req.body;
+
+    const updatedRoutes = await updateRoute(routeId, updateData);
     res.status(200).json({
       status: "success",
       data: updatedRoutes,
@@ -65,8 +90,8 @@ const handleUpdateRoute = async (req, res) => {
 
 const handleDeleteRoute = async (req, res) => {
   try {
-    const validatedRouteData = req.body;
-    const routes = await deleteRoute(validatedRouteData);
+    const routeId =  parseInt(req.params.routeId, 10);
+    const routes = await deleteRoute(routeId);
     res.status(200).json({
       message: "Route deleted successfully",
       status: "success",
@@ -86,7 +111,8 @@ const handleDeleteRoute = async (req, res) => {
 
 export {
   handleCreateRoute,
-  handleGetRoute,
+  handleGetRouteById,
+  handleGetAllRoutes,
   handleUpdateRoute,
   handleDeleteRoute,
 };
