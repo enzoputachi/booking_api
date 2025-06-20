@@ -1,63 +1,54 @@
-// Send a post request to initialize transaction
-const handleInitializeTransaction = async(req, res) => {
-    const { email, amount, bookingId } = req.body;
-    
+import { processBookingPaymentAndIssueTicket } from "../services/bookingOrchestrator.js";
+import { createPaymentIntent, verifyPayment } from "../services/paymentService.js";
+
+
+
+const handlePaymentIntent = async(req, res) => {
+    const { email, amount, bookingId, channel } = req.body;
+
     try {
-       const initialize = await axios.post('https://api.paystack.co/transaction/initialize', 
-        {
-            email:  email, 
-            amount: amount, 
-            metadata: {
-                bookingId,
-            }
-        },
-        {
-            headers: { Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}` },
-            'Content-type': 'application/json'
+        const payment = await createPaymentIntent({email, amount, bookingId, channel})
+
+        console.log("LOG Payment Ref:", payment);
+        
+        res.status(201).json({
+            meaasage: 'Transaction initialized',
+            status: 'success',
+            data: payment
         })
-
-        await db.payment.create()
-
-        res.status(200).json({
-        message: 'Transaction initilalized',
-        status: 'success',
-        data: initialize.data.data
-       })
     } catch (error) {
         console.error('Paystack Init Error:', error?.response?.data || error.message);
-        res.status(500).json({ message: 'Transaction initialization failed', error: error?.initialize?.data || error.message})
+        res.status(500).json({ message: 'Transaction initaialization failed', error: error?.response?.data || error.message})
     }
 }
-// Send a post request to verify transaction
-const handleVerifyTransaction = async(req, res) => {
-    const { reference } = req.params;
+
+
+const handleVerifyPayment = async(req, res) => {
+    const { reference: paystackRef } = req.params;
 
     try {
-        const verifyTransaction = await axios.get(`https://api.paystack.co/transaction/verify${reference}`, 
-            {
-                headers: { Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`}
-            }
-        )
-
         
-        const { status, data: txn } = verifyTransaction.data;
+        const { downloadUrl, booking } = await processBookingPaymentAndIssueTicket(paystackRef);
 
-        if (!status) {
-            return res.status(502).json({ message: 'Gateway error verifying transaction' });
-        }
-
-        if (txn.status === 'sucecsss') {
-            res.status(200).json({ message: 'Payment verified successfully', data: txn });
-        } else {
-            res.status(400).json({ message: 'Payment failed', data: txn });
-        }
+        res.status(201).json({
+            message: 'Payment verified; ticket generated',
+            status: 'success',
+            ticketUrl: downloadUrl,
+            data: booking
+        })
     } catch (error) {
-        console.error("verification error: ", error?.response?.data || error.message);
-        return res.status(500).json({ error: 'Verrirfication Error' })
+        console.error("🛑 Paystack Verify Error:", {
+            paystackRef,
+            status: error?.response?.status,
+            data: error?.response?.data,
+            message: error?.message,
+        });
+        res.status(500).json({ message: 'Transaction initaialization failed', error: error?.response?.data || error.message})
     }
 }
 
+
 export {
-    handleVerifyTransaction,
-    handleInitializeTransaction,
+    handlePaymentIntent,
+    handleVerifyPayment
 }
