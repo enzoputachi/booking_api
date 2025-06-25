@@ -1,4 +1,4 @@
-import { PrismaClient } from "../../prisma/src/generated/prisma/index.js";
+import { PrismaClient, PaymentStatus } from "../../prisma/src/generated/prisma/index.js";
 
 const prisma = new PrismaClient({
     log: [
