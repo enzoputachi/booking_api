@@ -7,6 +7,7 @@ import { createSeat } from "./seatService.js";
 //================================================= //
 
 
+// Create a new trip with associated bus and seats
 const createTrip = async(validatedTripdata) => {
     const { busId } = validatedTripdata;
 
@@ -17,14 +18,15 @@ const createTrip = async(validatedTripdata) => {
 
         const trip = await tx.trip.create({ data: validatedTripdata })
 
-        const validatedSeatdata = { tripId: trip.id, capacity: bus.capacity, seatsPerRow: bus.seatsPerRow}
-        await createSeat(validatedSeatdata, tx)
+        const validatedSeatData = { tripId: trip.id, capacity: bus.capacity, seatsPerRow: bus.seatsPerRow}
+        await createSeat(validatedSeatData, tx)
 
         return trip;
     })
 }
 
-const getTrip = async(tripId, db = prisma) => {
+// Fetch a trip by its ID with associated seats, route, and bus details
+const getTripById = async(tripId, db = prisma) => {
     if (!tripId) return;
     
     return await db.trip.findUnique({
@@ -37,13 +39,63 @@ const getTrip = async(tripId, db = prisma) => {
     })
 }
 
+const getAvailableSeatCountPerTrip = async (db = prisma) => {
+    const availableSeats = await db.seat.groupBy({
+        by: ['tripId'],
+        where: {
+            status: 'AVAILABLE',
+        },
+        _count: {
+            _all: true,
+        },
+    });
+
+    // convert to a map for quick lookup
+    const seatCountMap = new Map(
+        availableSeats.map(item => [item.tripId, item._count._all])
+    )
+
+    return seatCountMap;
+}
+
+// Fetch all trips with their available seat counts
+const getAllTrips = async(db = prisma) => {
+    
+    const [trips, seatCountMap] = await Promise.all([
+        db.trip.findMany({
+            include: { 
+                seats: true,
+                route: true,
+                bus: true,
+            },
+        }),
+        getAvailableSeatCountPerTrip(db)
+    ]);
+
+    return trips.map(trip => ({
+        ...trip,
+        availableSeatsCount: seatCountMap.get(trip.id) || 0,
+    }));
+}
+
+// Fetch trips with their seats and bus details based on filters and pagination
+/**
+ * Fetch trips with their seats and bus details based on filters and pagination
+ * @param {Object} filters - Filters to apply to the trip query
+ * @param {Object} pagination - Pagination options (skip, take)
+ * @param {Object} db - Prisma client instance (default: prisma)
+ * @returns {Promise<Array>} - Array of trips with seats and bus details
+ */
 const getTripsWithSeatsAndBus = async(filters = {}, pagination = {}, db = prisma) => {
-    const query = buildTripQuery(filters)
+    const query = buildTripQuery(filters);
+    // console.log('Trip query:', JSON.stringify(query, null, 2));
+
     const { skip = 0, take = undefined } = pagination;
 
     return await db.trip.findMany({...query, skip, take});
 }
 
+// Update a trip with new data
 const updateTrip = async(tripId, data, db = prisma) => {
     return await db.trip.update({
         where: { id: tripId },
@@ -57,13 +109,25 @@ const deleteTrip = async(tripId) => {
     })
 }
 
+// Build a query object for filtering trips based on origin, destination, and date
+/**
+ * Build a query object for filtering trips based on origin, destination, and date
+ * @param {Object} params - Parameters for filtering trips
+ * @param {string} params.origin - Origin location (optional)
+ * @param {string} params.destination - Destination location (optional)
+ * @param {string} params.date - Date of the trip (optional)
+ * @returns {Object} - Query object for Prisma findMany method
+ */
 const buildTripQuery = ({ origin, destination, date } = {}) => {
     const where = {};
 
+    // const origin = req.query.origin?.toLowerCase();
+    // const destination = req.query.destination?.toLowerCase();
+
     if (origin && destination ) {
         where.route = {
-            origin: { equals: origin, mode: 'insensitive' },
-            destination: { equals: destination, mode: 'insensitive' },
+            origin: { contains: origin,},
+            destination: { contains: destination,},
         }
     }
 
@@ -72,7 +136,7 @@ const buildTripQuery = ({ origin, destination, date } = {}) => {
         const end = new Date(date);
         end.setDate(end.getDate() + 1);
 
-        where.departAt = {
+        where.departTime = { 
             gte: start,
             lt: end,
         }
@@ -94,10 +158,12 @@ const buildTripQuery = ({ origin, destination, date } = {}) => {
 //================================================ //
 
 const findAvailableTrips = async({ origin, destination, date, page = 1, limit = 10 }, db = prisma) => {
+
     const skip = (page - 1) * limit;
     const filters = { origin, destination, date }
     
-    const [trips, total] = await promise.all([
+    // Promise.allSettled is a more resillient version of Promise.all
+    const [trips, total] = await Promise.all([
         getTripsWithSeatsAndBus(filters, {skip, take: limit }),
         db.trip.count({ where: buildTripQuery(filters).where }),
     ])
@@ -109,12 +175,12 @@ const findAvailableTrips = async({ origin, destination, date, page = 1, limit = 
             page,
             pages: Math.ceil(total / limit),
             hasNext: skip + limit < total,
-        }
+        },
     }
 }
 
 const validateBookableTrip = async(tripId, db = prisma) => {
-    const trip = await getTrip(tripId, db);
+    const trip = await getTripById(tripId, db);
 
     if (!trip) throw new Error('Trip not found');
 
@@ -129,9 +195,10 @@ const validateBookableTrip = async(tripId, db = prisma) => {
 
 export {
     createTrip,
-    getTrip,
+    getTripById,
     getTripsWithSeatsAndBus,
     updateTrip,
+    getAllTrips,
     deleteTrip,
     buildTripQuery,
     findAvailableTrips,
