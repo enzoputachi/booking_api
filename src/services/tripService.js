@@ -18,7 +18,8 @@ const createTrip = async(validatedTripdata) => {
 
         const trip = await tx.trip.create({ data: validatedTripdata })
 
-        const validatedSeatData = { tripId: trip.id, capacity: bus.capacity, seatsPerRow: bus.seatsPerRow}
+        // const validatedSeatData = { tripId: trip.id, capacity: bus.capacity, seatsPerRow: bus.seatsPerRow}
+        const validatedSeatData = { tripId: trip.id, capacity: bus.capacity}
         await createSeat(validatedSeatData, tx)
 
         return trip;
