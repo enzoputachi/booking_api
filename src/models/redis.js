@@ -1,6 +1,6 @@
 // import Redis from "ioredis";
 // // @ts-ignore
-// // import Redlock from 'redlock';
+// import Redlock from 'redlock';
 
 
 // export const redis = new Redis();
