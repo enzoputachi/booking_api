@@ -1,12 +1,13 @@
+import { SeatStatus } from "../../prisma/src/generated/prisma/index.js";
 import prisma from "../models/index.js";
-import { redlock } from "../models/redis.js";
+// import { redlock } from "../models/redis.js";
 
 
 // ================================================ //
 //                      CORE FEATURES               //
 //================================================= //
 
-const createSeat = async({validatedSeatdata, db = prisma}) => {
+const createSeat = async(validatedSeatdata, db = prisma) => {
     const { tripId, capacity, seatsPerRow } = validatedSeatdata;
     const seatNumbers = generateSeatNumbers(capacity, seatsPerRow)
     
@@ -24,7 +25,7 @@ const createSeat = async({validatedSeatdata, db = prisma}) => {
     }
 }
 
-const getSeatById = async({seatId, db = prisma}) => {
+const getSeatById = async(seatId, db = prisma) => {
     if (!seatId) throw new Error('No seat Id')
 
     const seat = await db.seat.findUnique({
@@ -39,7 +40,7 @@ const getAllSeats = async({ filter = {}, include = null} = {}, db = prisma) => {
     return seats;
 }
 
-const updateSeat = async({ seatId, data, db = prisma }) => {
+const updateSeat = async({ seatId, data },  db = prisma) => {
     return await db.seat.update({
         where: { id: seatId },
         data,
@@ -81,42 +82,83 @@ const findAvailableSeats = async(tripId, db = prisma) => {
     return availableSeats;
 }
 
-const reserveSeat = async(tripId, seatId, db = prisma) => {
-    const lockKey = `lock:seat:${seatId}`;
-    const lock = await redlock.acquire([lockKey], (1000 * 20));
+const reserveSeat = async({tripId, seatId}, db = prisma) => {
+    const now = new Date();
+    const expiryCutoff = new Date(now.getTime() - 5 * 60_000);
+    const seatIds = Array.isArray(seatId) ? seatId : [seatId];
+    console.log("Twice:", seatId, tripId);
+    
 
-    try {
-        const seat = await getSeatById(seatId, db);
-        if (!seat || seat.tripId !== tripId) throw new Error('Seat not found')
-
-        const now = new Date();
-
-        if (seat.status === 'RESERVED') {
-            const expired = seat.reservedAt && new Date(seat.reservedAt.getTime() + RESERVATION_EXPIRY_MINUTES * 60000) < now;
-
-            if (!expired) throw new Error('Seat already reserved')
+    const updated = await db.seat.updateMany({
+        where: {
+            id: { in: seatIds }, 
+            tripId,
+            OR: [
+                { status: 'AVAILABLE' },
+                {
+                    status: 'RESERVED',
+                    reservedAt: { not: null, lt: expiryCutoff } 
+                }
+            ],
+            NOT: { status: 'BOOKED' }
+        },
+        data: {
+            status: 'RESERVED',
+            reservedAt: now
         }
+    }); 
 
-        if (seat.status === 'BOOKED') throw new Error ('Seat already booked')
+    if (updated.count === 0) {
+        throw new Error('Seat not available');
+    }
 
-        return await db.seat.update({
-            where: { id: seatId },
-            data: {
-                status: 'RESERVED',
-                reservedAt: now,
-            },
-        });
-    } finally {
-        await lock.release();
-    }   
+    return db.seat.findMany({ where: { id: { in: seatIds } } });
 }
 
-const confirmSeat = async(seatId, db = prisma) => {
-    return await updateSeat({
-        seatId, 
-        data: {status: 'BOOKED'},
-        db
+const confirmSeat = async(seatIds, db = prisma) => {
+    const validatedSeatIds = Array.isArray(seatIds) ? seatIds : [seatIds]
+    return await db.seat.updateMany({
+        where: { id: { in: validatedSeatIds } },
+        data: { status: SeatStatus.BOOKED }
     })
+}
+
+// ================================================ //
+//                  EXTREME FEATURES       //
+//================================================ //
+const cleanSeatFromBooking = async() => {
+    const availableSeatsWithBookings = await prisma.seat.findMany({
+        where: {
+            status: SeatStatus.AVAILABLE,
+            booking: {
+                isNot: null,
+            }
+        },
+        select: {
+          id: true,
+          booking: {
+            select: { id: true },
+          }  
+        }
+    });
+
+    if (availableSeatsWithBookings.length = 0) {
+        console.log('No seats need clean up');
+        return 0;
+    }
+
+    const bookingIds = availableSeatsWithBookings.map(
+        (seat) => seat.booking?.id
+    );
+
+    const { count } = await prisma.booking.deleteMany({
+        where: {
+            id: { in: bookingIds }
+        }
+    });
+
+    console.log(`Unshackled ${count} booking(s) from AVAILABLE seat(s)`);
+    return count;
 }
 
 export {
@@ -127,5 +169,6 @@ export {
     deleteSeat,
     reserveSeat,
     findAvailableSeats,
-    confirmSeat
+    confirmSeat,
+    cleanSeatFromBooking
 }

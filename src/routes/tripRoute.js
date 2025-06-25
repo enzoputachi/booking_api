@@ -4,6 +4,8 @@ import {
   handleDeleteTrip,
   handleGetAllTrips,
   handleGetTripById,
+  handleValidateTripDetails,
+  handleSearchTripsByRoute,
   handleUpdateTrip,
 } from "../controllers/tripController.js";
 
@@ -110,6 +112,69 @@ router.post('/', handleCreateTrip);
  *         description: Server error
  */
 router.get('/', handleGetAllTrips);
+
+/**
+ * @swagger
+ * /api/trips/search:
+ *   get:
+ *     summary: Search trips by route
+ *     description: Retrieves a list of trips that match the given route criteria (e.g., origin, destination, and date).
+ *     tags:
+ *       - Trips
+ *     parameters:
+ *       - in: query
+ *         name: origin
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: The origin city or station of the route.
+ *       - in: query
+ *         name: destination
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: The destination city or station of the route.
+ *       - in: query
+ *         name: date
+ *         schema:
+ *           type: string
+ *           format: date
+ *         required: false
+ *         description: Filter trips by departure date (YYYY-MM-DD).
+ *     responses:
+ *       200:
+ *         description: A list of matching trips.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   id:
+ *                     type: integer
+ *                   departTime:
+ *                     type: string
+ *                     format: date-time
+ *                   arriveTime:
+ *                     type: string
+ *                     format: date-time
+ *                   busId:
+ *                     type: integer
+ *                   routeId:
+ *                     type: integer
+ *                   price:
+ *                     type: number
+ *                     format: float
+ *                   status:
+ *                     type: string
+ *                     enum: [SCHEDULED, CANCELLED, COMPLETED]
+ *       400:
+ *         description: Invalid parameters or missing required fields.
+ *       500:
+ *         description: Server error.
+ */
+router.get('/search', handleSearchTripsByRoute)
 
 /**
  * @swagger
@@ -246,5 +311,59 @@ router.patch('/:tripId', handleUpdateTrip);
  *         description: Server error
  */
 router.delete('/:tripId', handleDeleteTrip)
+
+/**
+ * @swagger
+ * /api/trips/{tripId}/validate:
+ *   get:
+ *     summary: Validate trip details
+ *     description: Validates the trip details for a given trip ID.
+ *     tags:
+ *       - Trips
+ *     parameters:
+ *       - in: path
+ *         name: tripId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Unique identifier of the trip to validate
+ *     responses:
+ *       200:
+ *         description: Trip details are valid
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 valid:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *       400:
+ *         description: Invalid trip ID or trip details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *       404:
+ *         description: Trip not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ */
+router.get('/:tripId/validate', handleValidateTripDetails)
+
+// ================================================ //
+//                      USER-FACING ROUTES      //
+//================================================ //
+
+
 
 export default router;

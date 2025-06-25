@@ -3,6 +3,8 @@ import userRouter from './userRoute.js';
 import busRouter from './busRoute.js';
 import tripRouter from './tripRoute.js';
 import seatRouter from './seatRouter.js';
+import bookingRouter from './bookingRoute.js';
+import paymentRoute from './paymentRoute.js'
 import express from 'express';
 
 const router = express.Router();
@@ -12,5 +14,7 @@ router.use('/buses', busRouter);
 router.use('/routes', routeRouter);
 router.use('/trips', tripRouter);
 router.use('/seats', seatRouter);
+router.use('/bookings', bookingRouter)
+router.use('/payments', paymentRoute)
 
 export default router;
