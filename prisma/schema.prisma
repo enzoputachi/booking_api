@@ -1,0 +1,186 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "./src/generated/prisma" 
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// enums
+enum BookingStatus {
+  DRAFT
+  PENDING
+  CONFIRMED
+  CANCELLED
+}
+
+enum SeatStatus {
+  AVAILABLE
+  BOOKED
+  RESERVED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+}
+
+enum Role {
+  ADMIN
+}
+
+enum TripStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+}
+
+// Lock table
+model SingletonJob {
+  name String   @id
+  lockedAt DateTime?
+}
+
+// models
+model User {
+  id       String   @id @default(uuid())
+  name     String
+  email    String   @unique
+  password String
+  status   String   @default("active")
+  lastLogin  DateTime?  
+  createdAt DateTime @default(now())
+  role     Role     @default(ADMIN)
+  logs     AdminActivityLog[]
+}
+
+model Route {
+  id          Int     @id @default(autoincrement())
+  origin      String
+  destination String
+  distanceKm  Float
+  isActive    Boolean @default(true)
+  trips       Trip[]
+}
+
+model Trip {
+  id            Int       @id @default(autoincrement())
+  departTime    DateTime
+  arriveTime    DateTime
+  busId         Int
+  bus           Bus       @relation(fields: [busId], references: [id])
+  routeId       Int
+  route         Route     @relation(fields: [routeId], references: [id])
+  price         Float
+  status        TripStatus  @default(SCHEDULED)
+  seats         Seat[]   
+  bookings      Booking[] 
+}
+
+
+model Bus {
+  id        Int    @id @default(autoincrement())
+  plateNo   String @unique
+  busType   String 
+  capacity  Int
+  seatsPerRow Int
+  isActive    Boolean @default(true)  
+  trips     Trip[]
+}
+
+model Seat {
+  id      Int     @id @default(autoincrement())
+  bookingId  Int? 
+  seatNo  String
+  status  SeatStatus  @default(AVAILABLE)
+  trip    Trip    @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  tripId  Int
+  reservedAt  DateTime? // ⌛used for expiration logic
+  booking Booking?    @relation(fields: [bookingId], references: [id])
+  @@unique([seatNo, tripId]) // composite uniqueness
+  @@index([tripId, status])
+}
+
+
+model Booking {
+  id                Int            @id @default(autoincrement())
+  tripId            Int
+  passengerTitle    String?
+  passengerName     String
+  passengerAddress  String
+  passengerAge      Int?
+  nextOfKinName     String
+  nextOfKinPhone    String
+  email             String
+  mobile            String
+  contactHash       String                       // ✅ pseudonymous linkage
+  userAgent         String?                      // ✅ helps debug user environment
+  ipAddress         String?                      // ✅ anti-abuse, geo, debugging
+  sessionId         String?                      // ✅ allows grouping actions
+  referrer          String?                      // ✅ attribution
+  deviceFingerprint String?                      // ✅ helps prevent abuse
+  bookingToken      String          @unique      // ✅ secure access without login
+  status            BookingStatus   @default(DRAFT)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  trip              Trip            @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  seat              Seat[]          
+  payment           Payment[]
+  isSplitPayment    Boolean         @default(false)
+  logs              BookingLog[]
+  Notifications     Notification[]
+}
+
+
+model Payment {
+  id             Int            @id @default(autoincrement())
+  bookingId      Int            
+  paystackRef    String?        @unique
+  amount         Float
+  channel        String?
+  currency       String?        @default("NGN")
+  provider       String?        @default("Paystack")
+  status         PaymentStatus  @default(PENDING)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  customerId     String? 
+  paidAt         DateTime?
+  authorization  Json?
+  booking        Booking        @relation(fields: [bookingId], references: [id])
+}
+
+model BookingLog {
+  id         Int        @id @default(autoincrement())
+  bookingId  Int
+  action     String     // e.g. "CREATED", "CANCELLED", "PAYMENT_FAILED"
+  timestamp  DateTime   @default(now())
+  metadata   Json?
+  booking    Booking    @relation(fields: [bookingId], references: [id])
+}
+
+model Notification {
+  id          Int      @id @default(autoincrement())
+  contactInfo String   // ✅ contact info (no FK to user)
+  type        String   // "EMAIL", "SMS", etc.
+  message     String
+  sentAt      DateTime
+  bookingId   Int?
+  booking     Booking? @relation(fields: [bookingId], references: [id])
+}
+
+model AdminActivityLog {
+  id        Int      @id @default(autoincrement())
+  userId    String
+  action    String   // e.g. "LOGIN", "UPDATED_TRIP", etc.
+  metadata  Json?
+  timestamp DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+}
