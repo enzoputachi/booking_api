@@ -1,5 +1,6 @@
+import { number } from "zod/v4";
 import { processBookingPaymentAndIssueTicket } from "../services/bookingOrchestrator.js";
-import { createPaymentIntent, verifyPayment } from "../services/paymentService.js";
+import { createPaymentIntent, getAllPayments, verifyPayment } from "../services/paymentService.js";
 
 
 
@@ -47,8 +48,29 @@ const handleVerifyPayment = async(req, res) => {
     }
 }
 
+const handleGetAllPayments = async(req, res) => {
+    const { search, sort, page =1, pageSize = 10 } = req.query;
+    try {
+        const payments = await getAllPayments({ 
+            filter: { search }, 
+            sort: sort ? JSON.parse(sort) : { createdAt: 'desc' }, 
+            page: Number(page), 
+            pageSize: Number(pageSize)
+        });
+
+        res.status(200).json({
+            message: 'Payments retrieved successfully',
+            status: 'success',
+            data: payments
+        });
+    } catch (error) {
+        console.error('Error retrieving payments:', error);
+        res.status(500).json({ message: 'Failed to retrieve payments', error: error.message });
+    }
+}
 
 export {
     handlePaymentIntent,
-    handleVerifyPayment
+    handleVerifyPayment,
+    handleGetAllPayments,
 }

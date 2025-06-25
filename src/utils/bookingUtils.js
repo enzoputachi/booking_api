@@ -13,13 +13,11 @@ const updateSeatStatus = async (tx, seatId) => {
 }
 
 // Hash contact info (email or phone)
-const hashContact = async() => {
-    return crypto.createHash('sha256').update(contactInfo).digest('hex');
+const hashContact = async(email, mobile) => {
+    const data = `${email.toLowerCase()}|${mobile} `;
+    return crypto.createHash('sha256').update(data).digest('hex');
 }
 
-const userAgent = req.get('User-Agent') || 'unknown'
-
-const ipAddress = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown'
 
 const bookingToken = crypto.randomBytes(32).toString('hex');
 
@@ -27,5 +25,7 @@ const bookingToken = crypto.randomBytes(32).toString('hex');
 
 export {
     updateSeatStatus,
-    findSeat
+    findSeat,
+    bookingToken,
+    hashContact
 }
