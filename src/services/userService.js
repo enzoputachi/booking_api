@@ -4,22 +4,23 @@ const createUser = async(validatedUserdata) => {
     return await prisma.user.create({ data: validatedUserdata })
 }
 
-const getUser = async(userId = '') => {
-
-    if (userId) {
-        return await prisma.user.findUnique({
-            where: {id: userId}
-        })
-    }
-
+const getAllUsers = async() => {
     return await prisma.user.findMany();
 }
 
+const getUserById = async(userId) => {
+    if (!userId) return null;
 
-const updateUser = async(userId, data) => {
+    return await prisma.user.findUnique({
+        where: {id: userId}
+    })
+}
+
+
+const updateUser = async(updatedData, userId ) => {
     return await prisma.user.update({
         where: { id: userId },
-        data,
+        data: updatedData,
     })
 }
 
@@ -32,7 +33,8 @@ const deleteUser = async(userId) => {
 
 export {
     createUser,
-    getUser,
+    getUserById,
+    getAllUsers,
     updateUser,
     deleteUser,
 }

@@ -54,17 +54,21 @@ const deleteSeat = async(seatId, db = prisma) => {
 }
 
 // Helper function to generate seat number
-const generateSeatNumbers = (capacity = 18, seatsPerRow = 4) => {
+const generateSeatNumbers = (capacity = 18) => {
     const seats = [];
-    const rows = Math.ceil(capacity / seatsPerRow)
+    // const rows = Math.ceil(capacity / seatsPerRow)
 
-    for (let row = 0; row < rows; row++) {
-        const rowLetter = String.fromCharCode(65 + row);
+    // for (let row = 0; row < rows; row++) {
+    //     const rowLetter = String.fromCharCode(65 + row);
 
-        for (let col = 1; col <=  seatsPerRow; col++) {
-            seats.push(`${rowLetter}${col}`)
-            if (seats.length === capacity) return seats;
-        }
+    //     for (let col = 1; col <=  seatsPerRow; col++) {
+    //         seats.push(`${rowLetter}${col}`)
+    //         if (seats.length === capacity) return seats;
+    //     }
+    // }
+
+    for (let i = 1; i <= capacity; i++) {
+        seats.push(i.toString());
     }
 
     return seats;
