@@ -13,7 +13,7 @@ const createPaymentIntent = async({bookingId, amount, channel, email}, db = pris
     })
 
     if (!booking) throw new Error('Booking not found');
-    if (booking.payment) throw new Error('Payment already exists for this bookinf');
+    // if (booking.payment) throw new Error('Payment already exists for this bookinf');
 
     const { reference, authorization_url } = await initializePaystackTransaction({ email, amount })
 
@@ -64,6 +64,42 @@ const verifyPayment = async(paystackRef, db= prisma) => {
     return updated;
 }
 
+const getAllPayments = async(
+    { filter = {}, sort = { createdAt: 'desc' }, page = 1, pageSize = 10 } = {},
+    db = prisma,
+    ) => {
+        const where = {};
+        
+        if (filter) {
+            if (filter.status) where.status = filter.status;
+            if (filter.bookingId) where.bookingId = filter.bookingId;
+        }
+
+        const skip = (page - 1) * pageSize;
+        const take = pageSize;
+        
+        const payments = await db.payment.findMany({
+        where,
+        orderBy: sort,
+        skip,
+        take,
+        include: {
+            booking: true,
+            }
+        })
+
+        const total = await db.payment.count({ where });
+        return {
+            data: payments,
+            page,
+            pageSize,
+            total, 
+            totalPages: Math.ceil(total / pageSize),
+            hasNext: skip + take < total,
+        }
+        
+}
+
 const getPaymentById = async(id, db = prisma) => {
     return db.payment.findUnique({ where: { id } })
 }
@@ -95,5 +131,6 @@ export const listPaymentsForBooking = async (bookingId, db = prisma) => {
 export {
     createPaymentIntent,
     verifyPayment,
-    getPaymentById
+    getPaymentById,
+    getAllPayments,
 }

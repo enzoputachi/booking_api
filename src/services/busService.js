@@ -1,38 +1,40 @@
 import prisma from "../models/index.js";
 
-const createBus = async(validatedBusdata) => {
-    return await prisma.bus.create({ data: validatedBusdata })
+const createBus = async(validatedBusdata, db = prisma) => {
+    return await db.bus.create({ data: validatedBusdata })
 }
 
-const getBus = async(busId = '') => {
-
-    if (busId) {
-        return await prisma.bus.findUnique({
-            where: {id: busId}
-        })
-    }
-
-    return await prisma.bus.findMany();
+const getAllBuses = async(db = prisma) => {
+    return await db.bus.findMany();
 }
 
+const getBusbyId = async(busId = '', db = prisma) => {
+    if (!busId) return null;
 
-const updateBus = async(busId, data) => {
-    return await prisma.bus.update({
-        where: { id: busId },
-        data,
+    return await db.bus.findUnique({
+        where: {id: busId}
     })
 }
 
 
-const deleteBus = async(busId) => {
-    return await prisma.bus.delete({
+const updateBus = async({busId, updateData}, db = prisma) => {
+    return await db.bus.update({
+        where: { id: busId },
+        data: updateData,
+    })
+}
+
+
+const deleteBus = async(busId, db = prisma) => {
+    return await db.bus.delete({
         where: { id: busId }
     })
 }
 
 export {
     createBus,
-    getBus,
+    getAllBuses,
     updateBus,
     deleteBus,
+    getBusbyId
 }

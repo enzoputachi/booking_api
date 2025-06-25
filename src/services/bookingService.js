@@ -4,6 +4,7 @@ import { confirmSeat, reserveSeat } from "./seatService.js";
 import { validateBookableTrip } from "./tripService.js";
 import { BookingStatus } from './../../prisma/src/generated/prisma/index.js';
 import { generateUniqueBookingToken } from "../utils/bookingToken.js";
+import { fi } from "zod/v4/locales";
 
 
 
@@ -31,13 +32,46 @@ const getbookingByToken = async(bookingToken, db = prisma) => {
     return booking;
 }
 
-const listBooking = async(db = prisma) => {
-    try {
-        const bookings = await db.booking.findMany()
-        return bookings;
-    } catch (error) {
-        console.error("Failed to list booking:", error.message)
-        throw error;
+const listBooking = async(
+    { search, sort, page = 1, pageSize = 10 } = {},
+    db = prisma
+) => {
+    const where = {};
+
+    if (search) {
+        if (search.status) where.status = search.status;
+        if (search.tripId) where.tripId = search.tripId;
+        if (search.bookingToken) where.bookingToken = search.bookingToken;
+    }
+
+    const skip = (page - 1) * pageSize;
+    const take = pageSize;
+
+    const bookings = await db.booking.findMany({
+        where,
+        orderBy: sort,
+        skip,
+        take,
+        include: {
+            trip: {
+                include: {
+                    route: true,
+                    bus: true,
+                }
+            },
+            seat: true,
+            payment: true,
+        }
+    });
+
+    const total = await db.booking.count({ where });
+    return {
+        data: bookings,
+        page,
+        pageSize,
+        total, 
+        totalPages: Math.ceil(total / pageSize),
+        hasNext: skip + take < total,
     }
 }
 
@@ -73,11 +107,11 @@ const createBookingDraft = async(draftPaylod) => {
     })
 }
 
-const confirmBookingDraft = async({bookingId, seat}, db = prisma) => {
+const confirmBookingDraft = async({bookingId, seatIds}, db = prisma) => {
 
     return db.$transaction( async(tx) => {
         await confirmBooking(bookingId, tx);
-        await confirmSeat(seat, tx)
+        await confirmSeat(seatIds, tx)
     })
 }
 
