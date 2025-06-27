@@ -35,6 +35,8 @@ enum PaymentStatus {
 
 enum Role {
   ADMIN
+  MANAGER
+  FINANCE
 }
 
 enum TripStatus {
@@ -51,15 +53,15 @@ model SingletonJob {
 
 // models
 model User {
-  id       String   @id @default(uuid())
-  name     String
-  email    String   @unique
-  password String
-  status   String   @default("active")
+  id         String   @id @default(uuid())
+  name       String
+  email      String   @unique
+  password   String
+  status     String   @default("active")
   lastLogin  DateTime?  
-  createdAt DateTime @default(now())
-  role     Role     @default(ADMIN)
-  logs     AdminActivityLog[]
+  createdAt  DateTime @default(now())
+  role       Role     @default(ADMIN)
+  logs       AdminActivityLog[]
 }
 
 model Route {
@@ -183,4 +185,19 @@ model AdminActivityLog {
   metadata  Json?
   timestamp DateTime @default(now())
   user      User     @relation(fields: [userId], references: [id])
+}
+
+model CompanySetting {
+  id            Int      @id @default(autoincrement())
+  companyName   String
+  supportEmail  String
+  supportPhone  String?
+  websiteUrl    String?
+  facebookUrl   String?
+  twitterUrl    String?
+  instagramUrl  String?
+  linkedinUrl   String?
+  address       String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 }

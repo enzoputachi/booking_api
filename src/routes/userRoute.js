@@ -4,8 +4,11 @@ import {
   handleDeleteUser,
   handleGetAllUsers,
   handleGetUserById,
+  handleLoginUser,
   handleUpdateUser,
 } from "../controllers/userController.js";
+import { authenticate } from '../middlewares/auth.js';
+
 
 
 const router = express.Router()
@@ -51,6 +54,54 @@ const router = express.Router()
  *         description: User created successfully
  */
 router.post('/', handleCreateUser);
+
+/**
+ * @swagger
+ * /api/users/login:
+ *   post:
+ *     summary: User login
+ *     tags:
+ *       - Auth
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               password:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: OK – returns JWT and basic user info
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 token:
+ *                   type: string
+ *                 user:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: string
+ *                     name:
+ *                       type: string
+ *                     email:
+ *                       type: string
+ *       400:
+ *         description: Missing or invalid parameters
+ *       401:
+ *         description: Invalid credentials
+ */
+router.post('/login', authenticate, handleLoginUser);
 
 /**
  * @swagger
