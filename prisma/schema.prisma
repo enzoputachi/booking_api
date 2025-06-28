@@ -130,7 +130,7 @@ model Booking {
   referrer          String?                      // ✅ attribution
   deviceFingerprint String?                      // ✅ helps prevent abuse
   bookingToken      String          @unique      // ✅ secure access without login
-  status            BookingStatus   @default(DRAFT)
+  status            BookingStatus   @default(PENDING)
   createdAt         DateTime        @default(now())
   updatedAt         DateTime        @updatedAt
   trip              Trip            @relation(fields: [tripId], references: [id], onDelete: Cascade)
