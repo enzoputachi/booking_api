@@ -188,17 +188,29 @@ model AdminActivityLog {
 }
 
 model CompanySetting {
-  id            Int      @id @default(autoincrement())
-  companyName   String
-  supportEmail  String
-  supportPhone  String?
-  websiteUrl    String?
-  facebookUrl   String?
-  twitterUrl    String?
-  whatsAppUrl   String?
-  instagramUrl  String?
-  linkedinUrl   String?
-  address       String?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id                     Int      @id @default(autoincrement())
+  companyName            String
+  contactEmail           String
+  contactPhone           String?
+  maintenanceMode        Boolean   @default(false)
+  seatHoldMinutes        Int       @default(0)
+  maxSeatsPerBooking     Int       @default(0)
+  bookingDeadlineHours   Int       @default(0)
+  paystackEnabled        Boolean   @default(false)
+  paystackPublicKey      String?   
+  bankTransferEnabled    Boolean   @default(false)
+  bookingEmailsEnabled   Boolean   @default(false)
+  paymentEmailsEnabled   Boolean   @default(false)
+  reminderSmsEnabled     Boolean   @default(false)
+  reminderHours          Int       @default(0)
+  websiteUrl             String?   
+  facebookUrl            String?   
+  twitterUrl             String?   
+  whatsAppUrl            String?   
+  instagramUrl           String?   
+  linkedinUrl            String?   
+  address                String?   
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
 }
+
