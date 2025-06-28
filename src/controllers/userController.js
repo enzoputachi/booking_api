@@ -3,13 +3,16 @@ import {
   deleteUser,
   getAllUsers,
   getUserById,
+  loginUser,
   updateUser,
 } from "../services/userService.js";
 
 const handleCreateUser = async (req, res) => {
+  const validatedUserData = req.body;
   try {
-    const validatedUserData = req.body;
+    
     const user = await createUser(validatedUserData);
+    console.log("User created successfully:", user);
     res.status(200).json({
       message: "User successfully created",
       status: "success",
@@ -26,6 +29,27 @@ const handleCreateUser = async (req, res) => {
     // throw new Error('Failed to create user', error?.response?.data || error.message)
   }
 };
+
+const handleLoginUser = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const user = await loginUser(email, password);
+    res.status(200).json({
+      message: "User successfully logged in",
+      status: "success",
+      data: user,
+    });
+  } catch (error) {
+    console.error(`Error logging in user: `, error?.user?.data || error.message);
+    res
+      .status(500)
+      .json({
+        message: "User login failed:",
+        error: error?.user?.data || error.message,
+      });
+    // throw new Error('Failed to create user', error?.response?.data || error.message)
+  }
+}
 
 const handleGetAllUsers = async (req, res) => {
   try {
@@ -118,4 +142,11 @@ const handleDeleteUser = async (req, res) => {
   }
 };
 
-export { handleCreateUser, handleGetAllUsers, handleGetUserById, handleUpdateUser, handleDeleteUser };
+export {
+  handleCreateUser,
+  handleLoginUser,
+  handleGetAllUsers,
+  handleGetUserById,
+  handleUpdateUser,
+  handleDeleteUser,
+};

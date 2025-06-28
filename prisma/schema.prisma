@@ -35,6 +35,8 @@ enum PaymentStatus {
 
 enum Role {
   ADMIN
+  MANAGER
+  FINANCE
 }
 
 enum TripStatus {
@@ -51,15 +53,15 @@ model SingletonJob {
 
 // models
 model User {
-  id       String   @id @default(uuid())
-  name     String
-  email    String   @unique
-  password String
-  status   String   @default("active")
+  id         String   @id @default(uuid())
+  name       String
+  email      String   @unique
+  password   String
+  status     String   @default("active")
   lastLogin  DateTime?  
-  createdAt DateTime @default(now())
-  role     Role     @default(ADMIN)
-  logs     AdminActivityLog[]
+  createdAt  DateTime @default(now())
+  role       Role     @default(ADMIN)
+  logs       AdminActivityLog[]
 }
 
 model Route {
@@ -128,7 +130,7 @@ model Booking {
   referrer          String?                      // ✅ attribution
   deviceFingerprint String?                      // ✅ helps prevent abuse
   bookingToken      String          @unique      // ✅ secure access without login
-  status            BookingStatus   @default(DRAFT)
+  status            BookingStatus   @default(PENDING)
   createdAt         DateTime        @default(now())
   updatedAt         DateTime        @updatedAt
   trip              Trip            @relation(fields: [tripId], references: [id], onDelete: Cascade)
@@ -184,3 +186,31 @@ model AdminActivityLog {
   timestamp DateTime @default(now())
   user      User     @relation(fields: [userId], references: [id])
 }
+
+model CompanySetting {
+  id                     Int      @id @default(autoincrement())
+  companyName            String
+  contactEmail           String
+  contactPhone           String?
+  maintenanceMode        Boolean   @default(false)
+  seatHoldMinutes        Int       @default(0)
+  maxSeatsPerBooking     Int       @default(0)
+  bookingDeadlineHours   Int       @default(0)
+  paystackEnabled        Boolean   @default(false)
+  paystackPublicKey      String?   
+  bankTransferEnabled    Boolean   @default(false)
+  bookingEmailsEnabled   Boolean   @default(false)
+  paymentEmailsEnabled   Boolean   @default(false)
+  reminderSmsEnabled     Boolean   @default(false)
+  reminderHours          Int       @default(0)
+  websiteUrl             String?   
+  facebookUrl            String?   
+  twitterUrl             String?   
+  whatsAppUrl            String?   
+  instagramUrl           String?   
+  linkedinUrl            String?   
+  address                String?   
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
+}
+
