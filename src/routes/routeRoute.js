@@ -6,7 +6,6 @@ import {
   handleGetRouteById,
   handleUpdateRoute,
 } from "../controllers/routeController.js";
-import { handleGetAllBuses } from '../controllers/busController.js';
 
 const router = express.Router();
 

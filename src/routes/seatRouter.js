@@ -5,7 +5,7 @@ import {
   handleGetSeat,
   handleUpdateSeat,
 } from "../controllers/seatController.js";
-import validateSchema from '../middilewares/validate.js';
+import validateSchema from '../middlewares/validate.js';
 import { SeatCreateSchema } from '../schemas/index.js';
 
 const router = express.Router();
