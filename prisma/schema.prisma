@@ -69,6 +69,7 @@ model Route {
   origin      String
   destination String
   distanceKm  Float
+  duration    String?
   isActive    Boolean @default(true)
   trips       Trip[]
 }
