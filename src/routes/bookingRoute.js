@@ -1,5 +1,5 @@
 import express from 'express';
-import { handleCreateBookingDraft, handleListBookings } from '../controllers/bookingController.js';
+import { handleCreateBookingDraft, handleGetBookingByToken, handleListBookings } from '../controllers/bookingController.js';
 
 
 const router = express.Router();
@@ -86,6 +86,106 @@ const router = express.Router();
 router.post('/', handleCreateBookingDraft);
 
 router.get('/', handleListBookings)
+
+/**
+ * @swagger
+ * /bookings/{bookingToken}:
+ *   get:
+ *     summary: Get booking by token
+ *     description: Retrieve detailed booking information using a unique booking token. This token provides secure, pseudonymous access without requiring authentication.
+ *     tags:
+ *       - Bookings
+ *     parameters:
+ *       - in: path
+ *         name: bookingToken
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: A unique booking token used to securely fetch booking details.
+ *     responses:
+ *       200:
+ *         description: Booking retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: integer
+ *                 tripId:
+ *                   type: integer
+ *                 passengerTitle:
+ *                   type: string
+ *                   nullable: true
+ *                 passengerName:
+ *                   type: string
+ *                 passengerAddress:
+ *                   type: string
+ *                 passengerAge:
+ *                   type: integer
+ *                   nullable: true
+ *                 nextOfKinName:
+ *                   type: string
+ *                 nextOfKinPhone:
+ *                   type: string
+ *                 email:
+ *                   type: string
+ *                 mobile:
+ *                   type: string
+ *                 contactHash:
+ *                   type: string
+ *                 userAgent:
+ *                   type: string
+ *                   nullable: true
+ *                 ipAddress:
+ *                   type: string
+ *                   nullable: true
+ *                 sessionId:
+ *                   type: string
+ *                   nullable: true
+ *                 referrer:
+ *                   type: string
+ *                   nullable: true
+ *                 deviceFingerprint:
+ *                   type: string
+ *                   nullable: true
+ *                 bookingToken:
+ *                   type: string
+ *                 status:
+ *                   type: string
+ *                   enum: [PENDING, CONFIRMED, CANCELLED]
+ *                 createdAt:
+ *                   type: string
+ *                   format: date-time
+ *                 updatedAt:
+ *                   type: string
+ *                   format: date-time
+ *                 isSplitPayment:
+ *                   type: boolean
+ *                 trip:
+ *                   $ref: '#/components/schemas/Trip'
+ *                 seat:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Seat'
+ *                 payment:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Payment'
+ *                 logs:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/BookingLog'
+ *                 Notifications:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Notification'
+ *       404:
+ *         description: Booking not found
+ *       500:
+ *         description: Internal server error
+ */
+router.get('/:bookingToken', handleGetBookingByToken);
 
 
 export default router;

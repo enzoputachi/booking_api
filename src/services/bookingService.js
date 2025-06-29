@@ -4,7 +4,6 @@ import { confirmSeat, reserveSeat } from "./seatService.js";
 import { validateBookableTrip } from "./tripService.js";
 import { BookingStatus } from './../../prisma/src/generated/prisma/index.js';
 import { generateUniqueBookingToken } from "../utils/bookingToken.js";
-import { fi } from "zod/v4/locales";
 
 
 
