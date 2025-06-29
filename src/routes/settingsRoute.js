@@ -1,5 +1,5 @@
 import express from "express";
-import { handleGetCompanySettings, handleUpdateCompanySettings } from "../controllers/settingsController.js";
+import { handleGetCompanySettings, handleSeedCompanySettings, handleUpdateCompanySettings } from "../controllers/settingsController.js";
 
 const router = express.Router();
 
@@ -47,6 +47,29 @@ const router = express.Router();
  *         - companyName
  *         - supportEmail
  */
+
+/**
+ * @swagger
+ * /api/companySettings/:
+ *   post:
+ *     summary: Seed default company settings
+ *     description: Creates a new `CompanySetting` record with default values and required fields only.
+ *     tags:
+ *       - Company Settings
+ *     requestBody:
+ *       required: false
+ *       description: No request body is required. The seed function inserts a default setting.
+ *     responses:
+ *       200:
+ *         description: Successfully seeded company settings
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/CompanySetting'
+ *       500:
+ *         description: Server error during seeding
+ */
+router.post('/', handleSeedCompanySettings);
 
 /**
  * @swagger

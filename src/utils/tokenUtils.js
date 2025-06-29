@@ -5,7 +5,7 @@ dotenv.config();
 
 pathFinder();
 
-console.log("SEECRET KEY", process.env.JWT_SECRET);
+// console.log("SEECRET KEY", process.env.JWT_SECRET);
 
 
 export const generateToken = async (id, role) => {
