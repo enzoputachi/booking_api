@@ -9,7 +9,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "generate": "prisma generate",
     "dev": "nodemon src/server.js",
-    "start": "node prepare && src/server.js"
+    "start": "node run prepare && src/server.js"
   },
   "keywords": [],
   "author": "",
