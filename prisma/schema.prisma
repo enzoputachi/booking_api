@@ -68,8 +68,9 @@ model Route {
   id          Int     @id @default(autoincrement())
   origin      String
   destination String
-  distanceKm  Float
+  distanceKm  Float?
   duration    String?
+  paymentType String @default("Full")
   isActive    Boolean @default(true)
   trips       Trip[]
 }

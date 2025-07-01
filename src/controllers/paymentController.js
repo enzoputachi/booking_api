@@ -1,6 +1,9 @@
 import { number } from "zod/v4";
 import { processBookingPaymentAndIssueTicket } from "../services/bookingOrchestrator.js";
 import { createPaymentIntent, getAllPayments, verifyPayment } from "../services/paymentService.js";
+import { generateTicketPDF } from "../services/pdfService.js";
+import { sendEmail } from "../services/mailService.js";
+import { bookingToken } from "../utils/bookingUtils.js";
 
 
 
@@ -29,14 +32,21 @@ const handleVerifyPayment = async(req, res) => {
 
     try {
         
-        const { downloadUrl, booking } = await processBookingPaymentAndIssueTicket(paystackRef);
-
-        res.status(201).json({
-            message: 'Payment verified; ticket generated',
-            status: 'success',
-            ticketUrl: downloadUrl,
-            data: booking
-        })
+        const booking = await processBookingPaymentAndIssueTicket(paystackRef);
+        await sendEmail(
+            'bookingConfirmation',
+            booking.email,
+            {
+                name: booking.passengerName,
+                bookingToken: booking.bookingToken,
+                link: `${process.env.APP_URL}/api/tickets/${booking.bookingToken}`,
+                isSplitPayment: booking.isSplitPayment
+            }
+        )
+        res.status(200).json({
+            message: 'Payment verified',
+            ticketUrl: `${process.env.APP_URL}/api/tickets/${booking.bookingToken}`,
+        });
     } catch (error) {
         console.error("🛑 Paystack Verify Error:", {
             paystackRef,
