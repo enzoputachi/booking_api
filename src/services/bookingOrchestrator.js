@@ -10,7 +10,7 @@ dotenv.config()
 
 pathFinder();
 
-console.log(`APP URL: ${process.env.APP_URL}`);
+// console.log(`APP URL: ${process.env.APP_URL}`);
 
 
 

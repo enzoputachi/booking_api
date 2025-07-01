@@ -5,8 +5,6 @@ dotenv.config();
 
 pathFinder()
 
-// console.log(process.env.JWT_SECRET)
-
 
 export const authenticate = async(req, res, next) => {
     let token;
