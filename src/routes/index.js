@@ -21,7 +21,7 @@ router.use('/seats', seatRouter);
 router.use('/bookings', bookingRouter)
 router.use('/payments', paymentRoute)
 router.use('/companySettings', settingsRouter)
-router.use('//dashboardStats', dashboardStatsRouter);
+router.use('/dashboardStats', dashboardStatsRouter);
 router.use('/tickets', streamTicketPDFRouter);
 
 export default router;
