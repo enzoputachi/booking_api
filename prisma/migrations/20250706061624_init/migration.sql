@@ -25,8 +25,10 @@ CREATE TABLE `User` (
 CREATE TABLE `Route` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `origin` VARCHAR(191) NOT NULL,
-    `destination` VARCHAR(191) NOT NULL,
-    `distanceKm` DOUBLE NOT NULL,
+    `destination` VARCHAR(191) NULL,
+    `duration` VARCHAR(191) NULL,
+    `paymentType` VARCHAR(191) NULL,
+    `distanceKm` DOUBLE NULL,
     `isActive` BOOLEAN NOT NULL DEFAULT true,
 
     PRIMARY KEY (`id`)
@@ -95,6 +97,9 @@ CREATE TABLE `Booking` (
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
     `updatedAt` DATETIME(3) NOT NULL,
     `isSplitPayment` BOOLEAN NOT NULL DEFAULT false,
+    `amountPaid` DOUBLE NOT NULL DEFAULT 0,
+    `amountDue` DOUBLE NOT NULL DEFAULT 0,
+    `isPaymentComplete` BOOLEAN NOT NULL DEFAULT true,
 
     UNIQUE INDEX `Booking_bookingToken_key`(`bookingToken`),
     PRIMARY KEY (`id`)

@@ -139,6 +139,9 @@ model Booking {
   seat              Seat[]          
   payment           Payment[]
   isSplitPayment    Boolean         @default(false)
+  amountPaid        Float @default(0)
+  amountDue         Float @default(0)
+  isPaymentComplete Boolean         @default(false)
   logs              BookingLog[]
   Notifications     Notification[]
 }
