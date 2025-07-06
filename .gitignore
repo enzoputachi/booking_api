@@ -4,3 +4,4 @@ prisma/src/generated/prisma
 ca.pem
 Design.md
 tickets
+.env.env
