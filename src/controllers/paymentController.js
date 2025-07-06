@@ -1,16 +1,23 @@
-import { number } from "zod/v4";
 import { processBookingPaymentAndIssueTicket } from "../services/bookingOrchestrator.js";
 import { createPaymentIntent, getAllPayments, verifyPayment } from "../services/paymentService.js";
-import { generateTicketPDF } from "../services/pdfService.js";
 import { sendEmail } from "../services/mailService.js";
-import { bookingToken } from "../utils/bookingUtils.js";
+import prisma from "../models/index.js";
 
 
 
 const handlePaymentIntent = async(req, res) => {
-    const { email, amount, bookingId, channel } = req.body;
+    const { email, amount, bookingId, channel, isSplitPayment } = req.body;
+
 
     try {
+
+        if (typeof isSplitPayment === 'boolean') {
+            await prisma.booking.update({
+                where: { id: bookingId },
+                data: { isSplitPayment },
+            })
+        };
+
         const payment = await createPaymentIntent({email, amount, bookingId, channel})
 
         console.log("LOG Payment Ref:", payment);
@@ -40,7 +47,12 @@ const handleVerifyPayment = async(req, res) => {
                 name: booking.passengerName,
                 bookingToken: booking.bookingToken,
                 link: `${process.env.APP_URL}/api/tickets/${booking.bookingToken}`,
-                isSplitPayment: booking.isSplitPayment
+                isSplitPayment: booking.isSplitPayment,
+                amountPaid: booking.amountPaid,
+                amountDue: booking.amountDue,
+                origin: booking.trip.route.origin,
+                destination: booking.trip.route.destination,
+                departTime: booking.trip.departTime,
             }
         )
         res.status(200).json({
