@@ -73,7 +73,7 @@ const handleGetAllUsers = async (req, res) => {
 
 const handleGetUserById = async (req, res) => {
   try {
-    const userId =  parseInt(req.params.userId, 10);
+    const userId =  req.params.userId;
     const user = await getUserById( userId );
     
     res.status(200).json({
@@ -95,7 +95,7 @@ const handleGetUserById = async (req, res) => {
 
 const handleUpdateUser = async (req, res) => {
   try {
-    const userId =  parseInt(req.params.userId, 10);
+    const userId =  req.params.userId;
     const updatedData = req.body;
 
     const updatedUser = await updateUser(updatedData, userId);
@@ -121,7 +121,7 @@ const handleUpdateUser = async (req, res) => {
 
 const handleDeleteUser = async (req, res) => {
   try {
-    const userId =  parseInt(req.params.userId, 10);
+    const userId =  req.params.userId;
 
 
     const deletedUser = await deleteUser(userId);

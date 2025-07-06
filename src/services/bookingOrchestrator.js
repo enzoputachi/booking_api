@@ -14,7 +14,7 @@ pathFinder();
 
 
 
-export const processBookingPaymentAndIssueTicket = async(paystackRef) => {
+export const processBookingPaymentAndIssueTicket = async(paystackRef, res) => {
     const paymentRecord = await verifyPayment(paystackRef);
     const bookingId = paymentRecord.bookingId;
 
@@ -56,16 +56,5 @@ export const processBookingPaymentAndIssueTicket = async(paystackRef) => {
 
     await confirmBookingDraft({ bookingId: booking.id, seatIds})
 
-    // Generate the ticket PDF
-    const { path: ticketPath, exists } = await generateTicketPDF(booking);
-    console.log('PDF created?', exists, 'at', ticketPath);
-
-    // Enqueue an email job to send the ticket
-    if (!exists) {
-        throw new Error(`PDF generation failed; no file at ${ticketPath}`);
-    }
-
-    const downloadUrl = `${process.env.APP_URL}/api/ticket/${booking.bookingToken}`
-
-    return { downloadUrl, booking }
+    return booking;
 }

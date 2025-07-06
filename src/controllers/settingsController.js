@@ -1,4 +1,22 @@
-import { getCompanySettings, updateCompanySettings } from "../services/settingsService.js";
+import { getCompanySettings, seedCompanySettings, updateCompanySettings } from "../services/settingsService.js";
+
+const handleSeedCompanySettings = async(req, res) => {
+    try {
+        const settings = await seedCompanySettings();
+
+        res.status(200).json({
+            message: "Settings seeded successfully",
+            status: "success",
+            data: settings,
+        })
+    } catch (error) {
+        console.error("Error seeding company settings:", error.message);
+        res.status(500).json({
+            message: "Error seeding company settings",
+            error: error.message,
+        })
+    }
+}
 
 const handleGetCompanySettings = async(req, res) => {
     try {
@@ -24,6 +42,9 @@ const handleUpdateCompanySettings = async (req, res) => {
         const { settingsId } = req.params;
         const updateData = req.body;
 
+        console.log( "Here:", settingsId);
+        
+
         // Validate the settingsId and updateData as needed
         if (!settingsId || !updateData) {
             return res.status(400).json({
@@ -33,7 +54,7 @@ const handleUpdateCompanySettings = async (req, res) => {
         }
 
         // Call the service to update settings
-        const updatedSettings = await updateCompanySettings(updateData);
+        const updatedSettings = await updateCompanySettings(Number(settingsId), updateData);
 
         res.status(200).json({
             message: "Settings updated successfully",
@@ -52,4 +73,5 @@ const handleUpdateCompanySettings = async (req, res) => {
 export {
     handleUpdateCompanySettings,
     handleGetCompanySettings,
+    handleSeedCompanySettings,
 };

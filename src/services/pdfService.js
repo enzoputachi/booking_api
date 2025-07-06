@@ -1,9 +1,25 @@
 import PDFDocument from 'pdfkit';
 import QRCode from 'qrcode';
-import fs from 'fs';
-import path from 'path';
+import prisma from '../models/index.js';
+// import fs from 'fs';
+// import path from 'path';
 
-export const generateTicketPDF = async (booking) => {
+export const generateTicketPDF = async (bookingToken, res) => {
+
+  const booking = await prisma.booking.findUnique({
+    where: { bookingToken },
+    include: {
+      trip: {
+        include: {
+          route: true,
+        }
+      },
+      seat: true,
+    }
+  })
+
+  if (!booking) throw new Error('Booking not found');
+
   if (!booking.trip) throw new Error("Missing trip");
   if (!booking.seat) throw new Error("Missing seat");
 
@@ -14,7 +30,7 @@ export const generateTicketPDF = async (booking) => {
     passengerName,
     email,
     mobile,
-    bookingToken,
+    // bookingToken,
     id
   } = booking;
 
@@ -23,12 +39,15 @@ export const generateTicketPDF = async (booking) => {
   const { seatNumber, gate } = seat;
 
   // ─── Setup ───────────────────────────────────────────────────────────
-  const ticketsDir = path.join(process.cwd(), 'tickets');
-  if (!fs.existsSync(ticketsDir)) fs.mkdirSync(ticketsDir);
+  // const ticketsDir = path.join(process.cwd(), 'tickets');
+  // if (!fs.existsSync(ticketsDir)) fs.mkdirSync(ticketsDir);
   
-  const outputPath = path.join(ticketsDir, `${bookingToken}.pdf`);
+  // const outputPath = path.join(ticketsDir, `${bookingToken}.pdf`);
+  // const stream = doc.pipe(fs.createWriteStream(outputPath));
   const doc = new PDFDocument({ size: [800, 300], margins: { top: 0, left: 0, right: 0, bottom: 0 } });
-  const stream = doc.pipe(fs.createWriteStream(outputPath));
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader('Content-Disposition', `inline; filename="${bookingToken}.pdf"`)
+  doc.pipe(res);
 
   // ─── Colors ──────────────────────────────────────────────────────────
   const darkGray = '#333333';
@@ -213,10 +232,10 @@ export const generateTicketPDF = async (booking) => {
   // ─── Finalize ────────────────────────────────────────────────────────
   doc.end();
   
-  await new Promise((resolve, reject) => {
-    stream.on('finish', resolve);
-    stream.on('error', reject);
-  });
+  // await new Promise((resolve, reject) => {
+  //   stream.on('finish', resolve);
+  //   stream.on('error', reject);
+  // });
 
-  return { path: outputPath, exists: fs.existsSync(outputPath) };
+  // return { path: outputPath, exists: fs.existsSync(outputPath) };
 };

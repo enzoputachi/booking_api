@@ -1,11 +1,24 @@
 import prisma from "../models/index.js";
 
-export const getCompanySettings = async() => {
-    const settings = await prisma.companySetting.findMany({
-        orderBy: {
-            createdAt: 'desc'
-        }
+
+export const seedCompanySettings = async() => {
+    const existing = await prisma.companySetting.findFirst();
+    if (existing) return existing;
+
+    const data = {
+        companyName: "Corpers Drive",
+        contactEmail: "corpersdrive@gmail.com"
+    };
+
+    const settings = await prisma.companySetting.create({
+        data,
     })
+
+    return settings;
+}
+
+export const getCompanySettings = async() => {
+    const settings = await prisma.companySetting.findFirst()
 
     return settings;
 }

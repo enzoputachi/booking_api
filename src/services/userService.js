@@ -75,14 +75,12 @@ const getUserById = async(userId) => {
     })
 }
 
-
 const updateUser = async(updatedData, userId ) => {
     return await prisma.user.update({
         where: { id: userId },
         data: updatedData,
     })
 }
-
 
 const deleteUser = async(userId) => {
     return await prisma.user.delete({
