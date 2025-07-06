@@ -67,8 +67,10 @@ model User {
 model Route {
   id          Int     @id @default(autoincrement())
   origin      String
-  destination String
-  distanceKm  Float
+  destination String?
+  duration    String?
+  paymentType String?
+  distanceKm  Float?
   isActive    Boolean @default(true)
   trips       Trip[]
 }
