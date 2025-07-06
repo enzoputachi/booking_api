@@ -8,7 +8,7 @@ export const generateUniqueBookingToken = async (db = prisma) => {
     let exists = true;
 
     while (exists) {
-        const id = nanoid(10);
+        const id = nanoid(6);
         token = PREFIX + id;
 
         exists = await db.booking.findUnique({

@@ -1,6 +1,6 @@
 node_modules
 prisma/src/generated/prisma
 .env
-
+ca.pem
 Design.md
 tickets

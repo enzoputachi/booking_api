@@ -47,8 +47,32 @@ export const processBookingPaymentAndIssueTicket = async(paystackRef, res) => {
       throw new Error("Seat data missing on booking");
     }
 
-    const seatIds = booking.seat.map(seat => seat.id)
+    const successfulPayments = await prisma.payment.findMany({
+      where: {
+        bookingId,
+        status: PaymentStatus.PAID,
+      },
+    });
 
+
+    const seatIds = booking.seat.map(seat => seat.id)
+    const pricePerSeat = booking.trip.price;
+    const seatCount = booking.seat.length;
+    const totalAmount = pricePerSeat * seatCount;
+
+    const amountPaid = successfulPayments.reduce((sum, p) => sum + p.amount, 0)
+    const amountDue = Math.max(totalAmount - amountPaid, 0)
+
+    await prisma.booking.update({
+        where: { id: bookingId },
+        data: {
+            amountDue,
+            amountPaid,
+            isPaymentComplete: amountDue === 0,
+        }
+    })
+
+    
     await prisma.seat.updateMany({
         where: { id: { in: seatIds } },
         data: { status: SeatStatus.BOOKED }
