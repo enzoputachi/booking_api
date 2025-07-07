@@ -1,4 +1,3 @@
-import { SeatStatus } from "../../prisma/src/generated/prisma/index.js";
 import prisma from "../models/index.js";
 
 
@@ -44,7 +43,7 @@ export const freeExpiredSeats = async() => {
     const threshold = new Date(now.getTime() - EXPIRATION_MS);
     const expired = await prisma.seat.findMany({
         where: {
-            status: SeatStatus.RESERVED,
+            status: "RESERVED",
             reservedAt: { lt: threshold }
         },
         select: { id: true }
@@ -82,7 +81,7 @@ export const freeExpiredSeats = async() => {
       prisma.seat.updateMany({
         where: { id: { in: seatIds } },
         data: {
-          status: SeatStatus.AVAILABLE,
+          status: "AVAILABLE",
           reservedAt: null,
         },
       }),
