@@ -7,15 +7,15 @@ pathFinder();
 export const transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST,
     port: +process.env.SMTP_PORT,
-    secure: 'false',
+    secure: false,
     auth: {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASS,
     },
-     tls: {
-    minVersion: 'TLSv1.2',      // optional but safer
-    rejectUnauthorized: false   // helps avoid Render’s strict TLS policies
-  }
+//      tls: {
+//     minVersion: 'TLSv1.2',      // optional but safer
+//     rejectUnauthorized: false   // helps avoid Render’s strict TLS policies
+//   }
 })
 
 // Verify as soon as app starts
