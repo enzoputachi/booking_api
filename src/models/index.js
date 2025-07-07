@@ -1,4 +1,5 @@
 import { PrismaClient, PaymentStatus } from "../../prisma/src/generated/prisma/index.js";
+// import { PrismaClient } from '@prisma/client';
 import dotenv from 'dotenv';
 import pathFinder from "../utils/pathFinder.js";
 dotenv.config()
