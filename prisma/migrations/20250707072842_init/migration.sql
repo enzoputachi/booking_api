@@ -99,7 +99,7 @@ CREATE TABLE `Booking` (
     `isSplitPayment` BOOLEAN NOT NULL DEFAULT false,
     `amountPaid` DOUBLE NOT NULL DEFAULT 0,
     `amountDue` DOUBLE NOT NULL DEFAULT 0,
-    `isPaymentComplete` BOOLEAN NOT NULL DEFAULT true,
+    `isPaymentComplete` BOOLEAN NOT NULL DEFAULT false,
 
     UNIQUE INDEX `Booking_bookingToken_key`(`bookingToken`),
     PRIMARY KEY (`id`)

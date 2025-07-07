@@ -7,7 +7,7 @@
     "postinstall": "prisma generate",
     "migrate": "prisma migrate deploy",
     "resolve-migration": "prisma migrate resolve --rolled-back 20250706064654_fix_is_paymentcomplete",
-    "prepare": "npm run resolve-migration",
+    "prepare": "npm run migrate",
     "test": "echo \"Error: no test specified\" && exit 1",
     "generate": "prisma generate",
     "dev": "nodemon src/server.js",
