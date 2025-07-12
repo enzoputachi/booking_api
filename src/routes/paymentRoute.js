@@ -175,4 +175,4 @@ router.get('/verify/:reference', handleVerifyPayment);
  * */
 router.get('/', handleGetAllPayments);
 
-export default router;
+export default router; 

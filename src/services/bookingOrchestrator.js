@@ -50,7 +50,7 @@ export const processBookingPaymentAndIssueTicket = async(paystackRef, res) => {
     const successfulPayments = await prisma.payment.findMany({
       where: {
         bookingId,
-        status: PaymentStatus.PAID,
+        status: 'PAID',
       },
     });
 
@@ -60,17 +60,37 @@ export const processBookingPaymentAndIssueTicket = async(paystackRef, res) => {
     const seatCount = booking.seat.length;
     const totalAmount = pricePerSeat * seatCount;
 
-    const amountPaid = successfulPayments.reduce((sum, p) => sum + p.amount, 0)
+    const amountPaid = successfulPayments.reduce((sum, p) => sum + p.amount, 0) / 100
     const amountDue = Math.max(totalAmount - amountPaid, 0)
 
-    await prisma.booking.update({
-        where: { id: bookingId },
-        data: {
-            amountDue,
-            amountPaid,
-            isPaymentComplete: amountDue === 0,
-        }
-    })
+    const updatedBooking = await prisma.booking.update({
+      where: { id: bookingId },
+      data: {
+        amountDue,
+        amountPaid,
+        isPaymentComplete: amountDue === 0,
+      },
+      include: {
+        // ← explicitly bring back the nested data your email template needs:
+        trip: {
+          include: {
+            route: true,
+          },
+        },
+        seat: true, // if you use seat in the template (you do)
+      },
+    });
+
+    console.log(
+      "Testing amountDue",
+      {
+      seatCount,
+      pricePerSeat,
+      totalAmount,
+      amountPaid,
+      amountDue,
+    });
+
 
     
     await prisma.seat.updateMany({
@@ -80,5 +100,5 @@ export const processBookingPaymentAndIssueTicket = async(paystackRef, res) => {
 
     await confirmBookingDraft({ bookingId: booking.id, seatIds})
 
-    return booking;
+    return updatedBooking;
 }

@@ -11,6 +11,13 @@ import prisma from "../models/index.js";
 export const tryAcquireLock = async(jobName, staleTimeoutMs) => {
     const staleThreshold = new Date(Date.now() - staleTimeoutMs);
 
+    // Ensure the lock row exist
+    await prisma.singletonJob.upsert({
+      where: { name: jobName },
+      update: {},
+      create: { name: jobName, lockedAt: null },
+    })
+
     // Attempt the atomic update
     const { count } = await prisma.singletonJob.updateMany({
         where: {

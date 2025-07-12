@@ -18,9 +18,9 @@ export const getDashboardStats = async () => {
     ]);
 
     // Calculate bookings growth percentage
-    const bookingGrowth = Math.round(
-        100* (newThisMonth - newLastMonth) / Math.max(newLastMonth || 1) // Avoid division by zero
-    )
+   const bookingGrowth = newLastMonth === 0
+        ? 100 // or null or 'N/A'
+        : Math.round(100 * (newThisMonth - newLastMonth) / newLastMonth);
 
     // Count active trips (scheduled trips with departTime in the future)
     const activeTrips = await prisma.trip.count({
@@ -53,9 +53,9 @@ export const getDashboardStats = async () => {
     ])
 
     // Calculate trip growth percentage
-    const tripGrowth = Math.round(
-        100 * (tripsThisMonth - tripsLastMonth) / Math.max(tripsLastMonth || 1) // Avoid division by zero
-    );
+    const tripGrowth = tripsLastMonth === 0
+        ? 100
+        : Math.round(100 * (tripsThisMonth - tripsLastMonth) / tripsLastMonth);
 
     // Count pending bookings
     const pendingBookings = await prisma.booking.count({
@@ -84,10 +84,20 @@ export const getDashboardStats = async () => {
     ]);
 
     // Calculate monthly revenue and growth percentage
-    const monthlyRevenue = thisRev._sum.amount ?? 0;
-    const revenueGrowth = Math.round(
-        100 * (monthlyRevenue - (lastRev._sum.amount ?? 0)) / Math.max(lastRev._sum.amount ?? 1, 1) // Avoid division by zero
-    );
+    const thisRevenueKobo = thisRev._sum.amount ?? 0;
+    const lastRevenueKobo = lastRev._sum.amount ?? 0;
+
+    const monthlyRevenue = thisRevenueKobo / 100;
+    const lastMonthRevenue = lastRevenueKobo / 100;
+
+    const revenueGrowth = lastMonthRevenue === 0
+        ? 100  // could also be `null`, `"N/A"`, or `Infinity`
+        : Math.round(
+            100 * (monthlyRevenue - lastMonthRevenue) / lastMonthRevenue
+            );
+
+    console.log("Revenue growth:", revenueGrowth, lastMonthRevenue);
+    
 
     return {
         totalBookings,

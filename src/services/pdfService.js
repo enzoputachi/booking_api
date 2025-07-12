@@ -128,6 +128,9 @@ export const generateTicketPDF = async (bookingToken, res) => {
     .fontSize(14)
     .text(passengerName?.toUpperCase() || 'JOHN DOE', 20, passengerY + 12, { width: 160, align: 'left' });
 
+  // ─── Gate & Boarding ─────────────────────────────────────────────────
+  const gateY = 220;
+
   doc.fillColor(mediumGray)
     .fontSize(9)
     .text('BOARDING TIME', 200, gateY);
@@ -176,8 +179,7 @@ export const generateTicketPDF = async (bookingToken, res) => {
   doc.fontSize(14)
     .text(destination.toUpperCase(), 290, destinationY, { width: 200, align: 'left' });
 
-  // ─── Gate & Boarding ─────────────────────────────────────────────────
-  const gateY = 220;
+  
 
 
   // doc.fillColor(mediumGray)

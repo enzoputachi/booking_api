@@ -16,8 +16,8 @@ export const templates = {
         <p>Your booking from <strong>${origin}</strong> to <strong>${destination}</strong> is confirmed.</p>
         <p><strong>Departure:</strong> ${tripDate} at ${tripTime}</p>
         ${paymentNote}
-        <p><a href="${link}" style="display:inline-block;padding:10px 16px;background:#007bff;color:white;text-decoration:none;border-radius:4px;">🎫 Download Your Ticket</a></p>
-        <p>Travel safely and thank you for choosing <strong>Corpers Drive</strong>.</p
+        <p><a href="${link}" style="text-decoration: underline; color: #007bff;">🎫 Download Your Ticket</a></p>
+        <p>Travel safely and thank you for choosing <strong>Corpers Drive</strong>.</p>
       `
     };
   }
