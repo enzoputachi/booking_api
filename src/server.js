@@ -69,5 +69,5 @@ app.get('/api/ticket/:token', (req, res) => {
 app.listen(port, () => {
     console.log(`🚀Server running at port ${port}`);
     console.log('Swagger docs at http://localhost:3000/api-docs');
-    startScheduler();
+    // startScheduler();
 })
