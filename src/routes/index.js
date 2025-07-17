@@ -9,6 +9,7 @@ import settingsRouter from './settingsRoute.js';
 import express from 'express';
 import dashboardStatsRouter from './dashboardStatsRoute.js';
 import streamTicketPDFRouter from './ticketRoute.js'
+import retrieveBookingRouter from './retrieveBookingRoute.js';
 
 
 const router = express.Router();
@@ -23,5 +24,6 @@ router.use('/payments', paymentRoute)
 router.use('/companySettings', settingsRouter)
 router.use('/dashboardStats', dashboardStatsRouter);
 router.use('/tickets', streamTicketPDFRouter);
+router.use('/retrieve', retrieveBookingRouter);
 
 export default router;
