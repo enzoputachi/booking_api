@@ -5,3 +5,4 @@ ca.pem
 Design.md
 tickets
 .env.env
+prisma/src/generated/
