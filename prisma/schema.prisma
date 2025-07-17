@@ -25,6 +25,7 @@ enum SeatStatus {
   AVAILABLE
   BOOKED
   RESERVED
+  UNAVAILABLE
 }
 
 enum PaymentStatus {
@@ -211,7 +212,8 @@ model CompanySetting {
   websiteUrl             String?   
   facebookUrl            String?   
   twitterUrl             String?   
-  whatsAppUrl            String?   
+  whatsAppUrl            String?  
+  whatsAppGroupUrl            String?  
   instagramUrl           String?   
   linkedinUrl            String?   
   address                String?   
