@@ -1,6 +1,7 @@
 import axios from "axios";
 import pathFinder from './../utils/pathFinder.js';
-
+import dotenv from 'dotenv';
+dotenv.config();
 pathFinder()
 
 // Send a post request to initialize transaction
