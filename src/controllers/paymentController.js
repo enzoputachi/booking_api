@@ -2,6 +2,10 @@ import { processBookingPaymentAndIssueTicket } from "../services/bookingOrchestr
 import { createPaymentIntent, getAllPayments, verifyPayment } from "../services/paymentService.js";
 import { sendEmail } from "../services/mailService.js";
 import prisma from "../models/index.js";
+import dotenv from 'dotenv';
+import pathFinder from "../utils/pathFinder.js";
+dotenv.config();
+pathFinder()
 
 
 
