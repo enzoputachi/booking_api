@@ -40,11 +40,20 @@ const getAllSeats = async({ filter = {}, include = null} = {}, db = prisma) => {
     return seats;
 }
 
-const updateSeat = async({ seatId, data },  db = prisma) => {
-    return await db.seat.update({
-        where: { id: seatId },
+const updateSeat = async({ seatIds, tripId, data },  db = prisma) => {
+    const result = await db.seat.updateMany({
+        where: { 
+            id: { in: seatIds}, 
+            tripId,
+        },
         data,
     })
+
+    if (result.count !== seatIds.length) {
+        throw new Error("Some seats were not found or not updated.");
+    }
+    
+    return result;
 }
 
 const deleteSeat = async(seatId, db = prisma) => {

@@ -23,6 +23,22 @@ export const authenticate = async(req, res, next) => {
     }
 }
 
+export const authenticateCookie = (req, res, next) => {
+    const token = req.cookies?.token;
+
+    if(!token) {
+        return res.status(401).json({ error: 'Unauthorized: No token cookies.'})
+    }
+
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        req.user = decoded;
+        next()
+    } catch (error) {
+        return res.status(401).json({ error: `Not authorized, token failed: ${error.message}` });
+    }
+}
+
 export const isAdmin = (req, res, next) => {
     if (req.user && req.user.role === 'ADMIN') {
         return next();

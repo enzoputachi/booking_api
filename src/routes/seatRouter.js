@@ -12,7 +12,7 @@ const router = express.Router();
 
 router.post('/', validateSchema(SeatCreateSchema), handleCreateSeat);
 router.get('/', handleGetSeat);
-router.patch('/', handleUpdateSeat);
-router.delete('/', handleDeleteSeat);
+router.patch('/update', handleUpdateSeat);
+router.delete('/delete', handleDeleteSeat);
 
 export default router;
