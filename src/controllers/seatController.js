@@ -51,11 +51,11 @@ const handleUpdateSeat = async (req, res) => {
   } catch (error) {
     console.error(
       "Error updating seat:",
-      error?.updatedSeat?.data || error.message
+      error.message
     );
     res.status(500).json({
       message: "Error updating seat",
-      error: error?.updatedSeat?.data || error.message,
+      error: error.message,
     });
   }
 };
