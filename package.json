@@ -12,7 +12,9 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "generate": "prisma generate",
     "dev": "nodemon src/server.js",
-    "start": "npm run prepare && node src/server.js"
+    "clear": "prisma migrate reset --force",
+    "studio": "prisma studio",
+    "start": "prisma db push --force-reset && npm run prepare && node src/server.js"
   },
   "keywords": [],
   "author": "",
