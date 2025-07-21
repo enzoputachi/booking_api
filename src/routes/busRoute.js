@@ -6,6 +6,7 @@ import {
   handleGetBusById,
   handleUpdateBus,
 } from "../controllers/busController.js";
+import { authenticate } from '../middlewares/auth.js';
 
 
 const router = express.Router();
@@ -83,7 +84,7 @@ const router = express.Router();
  *       500:
  *         description: Server error
  */
-router.post('/', handleCreateBus);
+router.post('/', authenticate, handleCreateBus);
 
 /**
  * @swagger
@@ -219,7 +220,7 @@ router.get('/:busId', handleGetBusById);
  *       500:
  *         description: Server error
  */
-router.patch('/:busId', handleUpdateBus);
+router.patch('/:busId', authenticate,  handleUpdateBus);
 
 /**
  * @swagger
@@ -244,7 +245,7 @@ router.patch('/:busId', handleUpdateBus);
  *       500:
  *         description: Server error
  */
-router.delete('/:busId', handleDeleteBus);
+router.delete('/:busId', authenticate,  handleDeleteBus);
 
 
 export default router;

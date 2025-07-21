@@ -8,6 +8,7 @@ import {
   handleSearchTripsByRoute,
   handleUpdateTrip,
 } from "../controllers/tripController.js";
+import { authenticate } from '../middlewares/auth.js';
 
 
 const router = express.Router()
@@ -63,7 +64,7 @@ const router = express.Router()
  *       500:
  *         description: Server error
  */
-router.post('/', handleCreateTrip);
+router.post('/', authenticate, handleCreateTrip);
 
 /**
  * @swagger
@@ -285,7 +286,7 @@ router.get('/:tripId', handleGetTripById);
  *       500:
  *         description: Server error
  */
-router.patch('/:tripId', handleUpdateTrip);
+router.patch('/:tripId', authenticate, handleUpdateTrip);
 
 /**
  * @swagger
@@ -310,7 +311,7 @@ router.patch('/:tripId', handleUpdateTrip);
  *       500:
  *         description: Server error
  */
-router.delete('/:tripId', handleDeleteTrip)
+router.delete('/:tripId', authenticate, handleDeleteTrip)
 
 /**
  * @swagger

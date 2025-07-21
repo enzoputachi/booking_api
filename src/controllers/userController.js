@@ -31,9 +31,15 @@ const handleCreateUser = async (req, res) => {
 };
 
 const handleLoginUser = async (req, res) => {
+  console.log('Login request received:', req.body);
   try {
     const { email, password } = req.body;
     const user = await loginUser(email, password);
+
+     if (!user) {
+       return res.status(401).json({ message: "Invalid email or " });
+     }
+
     res.status(200).json({
       message: "User successfully logged in",
       status: "success",

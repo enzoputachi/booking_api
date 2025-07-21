@@ -53,7 +53,7 @@ const router = express.Router()
  *       201:
  *         description: User created successfully
  */
-router.post('/', handleCreateUser);
+router.post('/', authenticate, handleCreateUser);
 
 /**
  * @swagger
@@ -101,7 +101,7 @@ router.post('/', handleCreateUser);
  *       401:
  *         description: Invalid credentials
  */
-router.post('/login', authenticate, handleLoginUser);
+router.post('/login', handleLoginUser);
 
 /**
  * @swagger
@@ -151,7 +151,7 @@ router.post('/login', authenticate, handleLoginUser);
  *       500:
  *         description: Server error
  */
-router.get('/', handleGetAllUsers);
+router.get('/', authenticate, handleGetAllUsers);
 
 /**
  * @swagger
@@ -212,7 +212,7 @@ router.get('/', handleGetAllUsers);
  *       500:
  *         description: Server error
  */
-router.get('/:userId', handleGetUserById);
+router.get('/:userId', authenticate, handleGetUserById);
 
 /**
  * @swagger
@@ -264,7 +264,7 @@ router.get('/:userId', handleGetUserById);
  *       500:
  *         description: Server error
  */
-router.patch('/:userId', handleUpdateUser);
+router.patch('/:userId', authenticate, handleUpdateUser);
 
 
 /**
@@ -302,6 +302,6 @@ router.patch('/:userId', handleUpdateUser);
  *       500:
  *         description: Server error
  */
-router.delete('/:userId', handleDeleteUser);
+router.delete('/:userId', authenticate, handleDeleteUser);
 
 export default router;

@@ -1,5 +1,6 @@
 import express from 'express';
 import { handleGetDashboardStats } from '../controllers/dashboardStatsController.js';
+import { authenticate } from '../middlewares/auth.js';
 const router = express.Router();
 
 /**
@@ -58,6 +59,6 @@ const router = express.Router();
  *       500:
  *         description: Internal server error
  */
-router.get('/', handleGetDashboardStats);
+router.get('/', authenticate, handleGetDashboardStats);
 
 export default router;

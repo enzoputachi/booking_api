@@ -6,6 +6,7 @@ import {
   handleGetRouteById,
   handleUpdateRoute,
 } from "../controllers/routeController.js";
+import { authenticate } from '../middlewares/auth.js';
 
 const router = express.Router();
 
@@ -49,7 +50,7 @@ const router = express.Router();
  *       500:
  *         description: Server error
  */
-router.post('/', handleCreateRoute);
+router.post('/', authenticate, handleCreateRoute);
 
 /**
  * @swagger
@@ -157,7 +158,7 @@ router.get('/', handleGetAllRoutes);
  *       500:
  *         description: Server error
  */
-router.patch('/:routeId', handleUpdateRoute);
+router.patch('/:routeId', authenticate, handleUpdateRoute);
 
 /**
  * @swagger
@@ -182,7 +183,7 @@ router.patch('/:routeId', handleUpdateRoute);
  *       500:
  *         description: Server error
  */
-router.delete('/:routeId', handleDeleteRoute);
+router.delete('/:routeId', authenticate, handleDeleteRoute);
 
 
 export default router;

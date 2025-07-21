@@ -33,13 +33,17 @@ const loginUser = async(email, password) => {
     });
 
     if (!user) {
-        throw new Error('Invalid email or password');
+        const err = new Error('Invalid email or password');
+        err.statusCode = 401;
+        throw err;
     }
 
     const isPasswordValid = await comparePassword(password, user.password);
 
     if (!isPasswordValid) {
-        throw new Error('Invalid email or password');
+        const err = new Error('Invalid email or password');
+        err.statusCode = 401;
+        throw err;
     }
 
     await prisma.user.update({
@@ -47,7 +51,7 @@ const loginUser = async(email, password) => {
         data: { lastLogin: new Date() }
     })
 
-    const token = generateToken(user.id, user.role);
+    const token = await generateToken(user.id, user.role);
 
     return {
         user,

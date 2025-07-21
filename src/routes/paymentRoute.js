@@ -1,5 +1,6 @@
 import express from 'express';
 import {  handleGetAllPayments, handlePaymentIntent, handleVerifyPayment } from '../controllers/paymentController.js';
+import { authenticate } from '../middlewares/auth.js';
 
 const router = express.Router();
 
@@ -173,6 +174,6 @@ router.get('/verify/:reference', handleVerifyPayment);
  *       500:
  *         description: Internal server error
  * */
-router.get('/', handleGetAllPayments);
+router.get('/', authenticate,  handleGetAllPayments);
 
 export default router; 
