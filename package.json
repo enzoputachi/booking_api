@@ -7,14 +7,11 @@
     "postinstall": "prisma generate",
     "migrate": "prisma migrate deploy",
     "push": "prisma db push",
-    "resolve-migration": "prisma migrate resolve --rolled-back 20250706064654_fix_is_paymentcomplete",
-    "prepare": "npm run push",
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "generate": "prisma generate",
-    "dev": "nodemon src/server.js",
+    "prepare": "npm run migrate",
     "clear": "prisma migrate reset --force",
     "studio": "prisma studio",
-    "start": "prisma db push --force-reset && npm run prepare && node src/server.js"
+    "dev": "nodemon src/server.js",
+    "start": "npm run prepare && node src/server.js"
   },
   "keywords": [],
   "author": "",
