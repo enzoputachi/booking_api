@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "postinstall": "prisma generate",
-    "migrate": "npm run baseline && prisma migrate deploy",
+    "migrate": "prisma migrate deploy",
     "push": "prisma db push",
     "prepare": "npm run migrate",
     "baseline": "prisma migrate resolve --applied \"20250721155132_init\"",
