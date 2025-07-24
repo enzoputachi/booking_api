@@ -28,6 +28,7 @@ export const generateTicketPDF = async (bookingToken, res) => {
     trip,
     seat,
     passengerName,
+    isSplitPayment,
     email,
     mobile,
     // bookingToken,
@@ -37,6 +38,7 @@ export const generateTicketPDF = async (bookingToken, res) => {
   const { code: tripCode, departTime, route } = trip;
   const { origin, destination } = route;
   const { seatNo: seatNumber, gate } = seat;
+  const isSplit = isSplitPayment ? 'SPLIT' : 'FULL';
 
   // ─── Setup ───────────────────────────────────────────────────────────
   // const ticketsDir = path.join(process.cwd(), 'tickets');
@@ -105,12 +107,12 @@ export const generateTicketPDF = async (bookingToken, res) => {
   doc.fillColor(darkGray)
     .font('Times-Bold')
     .fontSize(32)
-    .text('BOARDING PASS', 20, 20);
+    .text('BUS TICKET', 20, 20);
 
   doc.fillColor(mediumGray)
     .font('Times-Roman')
     .fontSize(10)
-    .text('Corpers Drive', 20, 55);
+    .text('CORPERS DRIVE', 20, 55);
 
   doc.fillColor(darkGray)
     .font('Times-Bold')
@@ -127,17 +129,6 @@ export const generateTicketPDF = async (bookingToken, res) => {
     .font('Times-Bold')
     .fontSize(14)
     .text(passengerName?.toUpperCase() || 'JOHN DOE', 20, passengerY + 12, { width: 160, align: 'left' });
-
-  // ─── Gate & Boarding ─────────────────────────────────────────────────
-  const gateY = 220;
-
-  doc.fillColor(mediumGray)
-    .fontSize(9)
-    .text('BOARDING TIME', 200, gateY);
-  doc.fillColor(darkGray)
-    .font('Times-Bold')
-    .fontSize(20)
-    .text(formattedBoardingTime, 200, gateY + 12);
 
   // doc.fillColor(mediumGray)
   //   .fontSize(9)
@@ -164,7 +155,7 @@ export const generateTicketPDF = async (bookingToken, res) => {
   doc.fillColor(darkGray)
     .font('Times-Bold')
     .fontSize(14)
-    .text(seatNumber || '2A', 500, passengerY + 12);
+    .text(seatNumber || 'N/A', 500, passengerY + 12);
 
   // ─── Large Route Display ─────────────────────────────────────────────
   const destinationY = 140;
@@ -174,21 +165,30 @@ export const generateTicketPDF = async (bookingToken, res) => {
     .fontSize(14)
     .text(origin.toUpperCase(), 20, destinationY, { width: 200, align: 'left' });
 
-  // drawAirplaneIcon(240, destinationY + 10);
+  drawBusIcon(240, destinationY + 10);
 
   doc.fontSize(14)
     .text(destination.toUpperCase(), 290, destinationY, { width: 200, align: 'left' });
 
   
+  // ─── Gate & Boarding ─────────────────────────────────────────────────
+  const gateY = 220;
 
+  doc.fillColor(mediumGray)
+    .fontSize(9)
+    .text('PAYMENT TYPE', 20, gateY);
+  doc.fillColor(darkGray)
+    .font('Times-Bold')
+    .fontSize(20)
+    .text(isSplit || 'N/A', 20, gateY + 12);
 
-  // doc.fillColor(mediumGray)
-  //   .fontSize(9)
-  //   .text('GATE', 20, gateY);
-  // doc.fillColor(darkGray)
-  //   .font('Times-Bold')
-  //   .fontSize(20)
-  //   .text(gate || '25A', 20, gateY + 12);
+  doc.fillColor(mediumGray)
+    .fontSize(9)
+    .text('BOARDING TIME', 200, gateY);
+  doc.fillColor(darkGray)
+    .font('Times-Bold')
+    .fontSize(20)
+    .text(formattedBoardingTime, 200, gateY + 12);
 
 
   // ─── Divider ─────────────────────────────────────────────────────────
@@ -213,8 +213,8 @@ export const generateTicketPDF = async (bookingToken, res) => {
   doc.fillColor(mediumGray).fontSize(8).text('PASSENGER', stubX, stubInfoY);
   doc.fillColor(darkGray).font('Times-Bold').fontSize(10).text(passengerName.toUpperCase(), stubX, stubInfoY + 10, { width: 160, align: 'left' });
 
-  // doc.fillColor(mediumGray).fontSize(8).text('FLIGHT', stubX, stubInfoY + stubSpacing);
-  // doc.fillColor(darkGray).font('Times-Bold').fontSize(10).text(tripCode, stubX, stubInfoY + stubSpacing + 10);
+  doc.fillColor(mediumGray).fontSize(8).text('PAYMENT TYPE', stubX, stubInfoY + stubSpacing);
+  doc.fillColor(darkGray).font('Times-Bold').fontSize(10).text(isSplit, stubX, stubInfoY + stubSpacing + 10);
 
   doc.fillColor(mediumGray).fontSize(8).text('SEAT', stubX, stubInfoY + stubSpacing * 2);
   doc.fillColor(darkGray).font('Times-Bold').fontSize(10).text(seatNumber, stubX, stubInfoY + stubSpacing * 2 + 10);
@@ -222,8 +222,8 @@ export const generateTicketPDF = async (bookingToken, res) => {
   doc.fillColor(mediumGray).fontSize(8).text('DATE', stubX, stubInfoY + stubSpacing * 3);
   doc.fillColor(darkGray).font('Times-Bold').fontSize(10).text(formattedDate, stubX, stubInfoY + stubSpacing * 3 + 10);
 
-  // doc.fillColor(mediumGray).fontSize(8).text('GATE', stubX, stubInfoY + stubSpacing * 4);
-  // doc.fillColor(darkGray).font('Times-Bold').fontSize(10).text(gate, stubX, stubInfoY + stubSpacing * 4 + 10);
+  doc.fillColor(mediumGray).fontSize(8).text('BUS', stubX, stubInfoY + stubSpacing * 4);
+  doc.fillColor(darkGray).font('Times-Bold').fontSize(10).text("Sprinter", stubX, stubInfoY + stubSpacing * 4 + 10);
 
   // ─── QR Code ─────────────────────────────────────────────────────────
   try {
