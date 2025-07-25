@@ -48,7 +48,7 @@ const listBooking = async(
 
     const bookings = await db.booking.findMany({
         where,
-        orderBy: sort,
+        orderBy: sort || { createdAt: 'desc'},
         skip,
         take,
         include: {

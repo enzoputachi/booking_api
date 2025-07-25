@@ -80,7 +80,7 @@ const getAllPayments = async(
         
         const payments = await db.payment.findMany({
         where,
-        orderBy: sort,
+        orderBy: sort || { createdAt: 'desc'},
         skip,
         take,
         include: {
