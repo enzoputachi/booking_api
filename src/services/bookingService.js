@@ -93,26 +93,66 @@ const createBookingDraft = async(draftPaylod) => {
     return await prisma.$transaction(async (tx) => {
         await validateBookableTrip(tripId, tx);
         await reserveSeat({tripId, seatId}, tx);
-        const bookingData = {
+        const bookingDraft = await tx.booking.create({
+          data: {
             ...rest,
             tripId,
-            seat: {
-                connect: Array.isArray(seatId) ? seatId.map(id => ({ id })) : { id: seatId }
-            }
-        }
-        const bookingDraft = await createBooking(bookingData, tx);
+            status: BookingStatus.PENDING, // ← set your draft status
+            bookingToken: await generateUniqueBookingToken(),
+          },
+        });
         // const
         return bookingDraft;
     })
 }
 
-const confirmBookingDraft = async({bookingId, seatIds}, db = prisma) => {
+// const confirmBookingDraft = async({bookingId, seatIds}, db = prisma) => {
 
-    return db.$transaction( async(tx) => {
-        await confirmBooking(bookingId, tx);
-        await confirmSeat(seatIds, tx)
-    })
-}
+//     return db.$transaction( async(tx) => {
+//         await confirmBooking(bookingId, tx);
+//         await confirmSeat(seatIds, tx)
+//     })
+// }
+
+/**
+ * Confirms a PENDING booking: marks it CONFIRMED and attaches the seats.
+ * @param {{ bookingId: number, seatIds: number[] }} params
+ */
+const confirmBookingDraft = async ({ bookingId, seatIds }, db = prisma) => {
+  return await db.$transaction(async (tx) => {
+    // 1) Flip booking to CONFIRMED
+    await tx.booking.update({
+      where: { id: bookingId },
+      data: { status: BookingStatus.CONFIRMED },
+    });
+
+    // 2) Flip seats to BOOKED and write bookingId
+    const now = new Date();
+    const holdCutoff = new Date(now.getTime() - 5 * 60_000);
+
+    const { count } = await tx.seat.updateMany({
+      where: {
+        id: { in: seatIds },
+        status: "RESERVED",
+        reservedAt: { gte: holdCutoff },
+      },
+      data: {
+        status: "BOOKED",
+        bookingId: bookingId,
+      },
+    });
+
+    if (count !== seatIds.length) {
+      throw new Error("Hold expired on one or more seats—please retry.");
+    }
+
+    // 3) Return the fully wired booking
+    return tx.booking.findUnique({
+      where: { id: bookingId },
+      include: { seat: true, trip: { include: { route: true, bus: true } } },
+    });
+  });
+};
 
 
 

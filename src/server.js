@@ -11,6 +11,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
 import pathFinder from './utils/pathFinder.js';
+import { testRedisConnection } from './models/redis.js';
 // import { startScheduler } from './services/schedular.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -72,4 +73,5 @@ app.listen(port, () => {
     console.log(`🚀Server running at port ${port}`);
     console.log('Swagger docs at http://localhost:3000/api-docs');
     // startScheduler();
+    testRedisConnection();
 })

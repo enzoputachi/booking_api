@@ -1,5 +1,6 @@
 import prisma from "../models/index.js";
 import { createSeat } from "./seatService.js";
+import { SEAT_HOLD_MS } from './../../config/booking.js';
 
 
 // ================================================ //
@@ -184,14 +185,30 @@ const validateBookableTrip = async(tripId, db = prisma) => {
     const trip = await getTripById(tripId, db);
 
     if (!trip) throw new Error('Trip not found');
-
     if (trip.departAt < new Date()) throw new Error('Cannot book past trips')
+    
+    const now = Date.now();
+    const enrichedSeats = trip.seats.map(seat => {
+    const expiredHold =
+      seat.status === 'RESERVED' &&
+      seat.reservedAt &&
+      now - seat.reservedAt.getTime() > SEAT_HOLD_MS;
+    return {
+      ...seat,
+      isAvailable: seat.status === 'AVAILABLE' || expiredHold,
+    };
+  });
+    
+   const hasBookableSeat = enrichedSeats.some(seat => seat.isAvailable);
 
-    if (!trip.seats.some(seat => seat.status === 'AVAILABLE')) {
-        throw new Error('no seats available');
-    }
+  if (!hasBookableSeat) {
+    throw new Error('No seats available for booking.');
+  }
 
-    return trip
+   return {
+    ...trip,
+    seats: enrichedSeats,
+  };
 }
 
 export {

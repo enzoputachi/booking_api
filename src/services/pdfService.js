@@ -31,13 +31,15 @@ export const generateTicketPDF = async (bookingToken, res) => {
     isSplitPayment,
     email,
     mobile,
+    amountDue,
+    amountPaid,
     // bookingToken,
     id
   } = booking;
 
   const { code: tripCode, departTime, route } = trip;
   const { origin, destination } = route;
-  const { seatNo: seatNumber, gate } = seat;
+  const seatNumbers = seat.map(s => s.seatNo).join(', ');
   const isSplit = isSplitPayment ? 'SPLIT' : 'FULL';
 
   // ─── Setup ───────────────────────────────────────────────────────────
@@ -130,13 +132,13 @@ export const generateTicketPDF = async (bookingToken, res) => {
     .fontSize(14)
     .text(passengerName?.toUpperCase() || 'JOHN DOE', 20, passengerY + 12, { width: 160, align: 'left' });
 
-  // doc.fillColor(mediumGray)
-  //   .fontSize(9)
-  //   .text('BUS', 200, passengerY);
-  // doc.fillColor(darkGray)
-  //   .font('Times-Bold')
-  //   .fontSize(14)
-  //   .text(tripCode || 'AV 1A9', 200, passengerY + 12);
+  doc.fillColor(mediumGray)
+    .fontSize(9)
+    .text('AMOUNT DUE', 200, passengerY);
+  doc.fillColor(darkGray)
+    .font('Times-Bold')
+    .fontSize(14)
+    .text(`NGN${amountDue}` || 'N/A', 200, passengerY + 12);
 
   const tripDate = new Date(departTime);
   const formattedDate = `${String(tripDate.getDate()).padStart(2, '0')} ${tripDate.toLocaleDateString('en-US', { month: 'short' }).toUpperCase()} ${tripDate.getFullYear()}`;
@@ -155,7 +157,7 @@ export const generateTicketPDF = async (bookingToken, res) => {
   doc.fillColor(darkGray)
     .font('Times-Bold')
     .fontSize(14)
-    .text(seatNumber || 'N/A', 500, passengerY + 12);
+    .text(seatNumbers || 'N/A', 500, passengerY + 12);
 
   // ─── Large Route Display ─────────────────────────────────────────────
   const destinationY = 140;
@@ -216,23 +218,23 @@ export const generateTicketPDF = async (bookingToken, res) => {
   doc.fillColor(mediumGray).fontSize(8).text('PAYMENT TYPE', stubX, stubInfoY + stubSpacing);
   doc.fillColor(darkGray).font('Times-Bold').fontSize(10).text(isSplit, stubX, stubInfoY + stubSpacing + 10);
 
-  doc.fillColor(mediumGray).fontSize(8).text('SEAT', stubX, stubInfoY + stubSpacing * 2);
-  doc.fillColor(darkGray).font('Times-Bold').fontSize(10).text(seatNumber, stubX, stubInfoY + stubSpacing * 2 + 10);
+  doc.fillColor(mediumGray).fontSize(8).text('AMOUNT DUE', stubX, stubInfoY + stubSpacing * 2);
+  doc.fillColor(darkGray).font('Times-Bold').fontSize(10).text(`NGN${amountDue}`, stubX, stubInfoY + stubSpacing * 2 + 10);
 
   doc.fillColor(mediumGray).fontSize(8).text('DATE', stubX, stubInfoY + stubSpacing * 3);
   doc.fillColor(darkGray).font('Times-Bold').fontSize(10).text(formattedDate, stubX, stubInfoY + stubSpacing * 3 + 10);
 
-  doc.fillColor(mediumGray).fontSize(8).text('BUS', stubX, stubInfoY + stubSpacing * 4);
-  doc.fillColor(darkGray).font('Times-Bold').fontSize(10).text("Sprinter", stubX, stubInfoY + stubSpacing * 4 + 10);
+  doc.fillColor(mediumGray).fontSize(8).text('SEAT', stubX, stubInfoY + stubSpacing * 4);
+  doc.fillColor(darkGray).font('Times-Bold').fontSize(10).text(seatNumbers, stubX, stubInfoY + stubSpacing * 4 + 10);
 
   // ─── QR Code ─────────────────────────────────────────────────────────
-  try {
-    const qrUrl = `${process.env.APP_URL}/verify/${bookingToken}`;
-    const buffer = await QRCode.toBuffer(qrUrl, { width: 100 });
-    doc.image(buffer, 700, 180, { width: 80, height: 80 });
-  } catch (err) {
-    doc.fillColor('red').fontSize(10).text('QR Code Failed', 650, 260);
-  }
+  // try {
+  //   const qrUrl = `${process.env.APP_URL}/api/verify/${bookingToken}`;
+  //   const buffer = await QRCode.toBuffer(qrUrl, { width: 100 });
+  //   doc.image(buffer, 700, 180, { width: 80, height: 80 });
+  // } catch (err) {
+  //   doc.fillColor('red').fontSize(10).text('QR Code Failed', 650, 260);
+  // }
 
   // ─── Finalize ────────────────────────────────────────────────────────
   doc.end();

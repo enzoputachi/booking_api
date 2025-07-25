@@ -49,7 +49,7 @@ router.post('/initialize', handlePaymentIntent);
 /**
  * @swagger
  * /api/verify/{reference}:
- *   get:
+ *   post:
  *     summary: Verify a payment by reference
  *     tags:
  *       - Payments
@@ -80,7 +80,7 @@ router.post('/initialize', handlePaymentIntent);
  *       500:
  *         description: Internal server error
  */
-router.get('/verify/:reference', handleVerifyPayment);
+router.post('/verify/:reference', handleVerifyPayment);
 
 /**
  * @swagger

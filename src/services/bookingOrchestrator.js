@@ -14,7 +14,7 @@ pathFinder();
 
 
 
-export const processBookingPaymentAndIssueTicket = async(paystackRef, res) => {
+export const processBookingPaymentAndIssueTicket = async({paystackRef, seatIds}, res) => {
     const paymentRecord = await verifyPayment(paystackRef);
     const bookingId = paymentRecord.bookingId;
 
@@ -27,7 +27,6 @@ export const processBookingPaymentAndIssueTicket = async(paystackRef, res) => {
                     route: true
                 }
             },
-            seat: true 
         }
     });
 
@@ -43,9 +42,9 @@ export const processBookingPaymentAndIssueTicket = async(paystackRef, res) => {
       throw new Error("Route missing on trip");
     }
 
-    if (!booking.seat) {
-      throw new Error("Seat data missing on booking");
-    }
+    // if (!booking.seat) {
+    //   throw new Error("Seat data missing on booking");
+    // }
 
     const successfulPayments = await prisma.payment.findMany({
       where: {
@@ -55,9 +54,9 @@ export const processBookingPaymentAndIssueTicket = async(paystackRef, res) => {
     });
 
 
-    const seatIds = booking.seat.map(seat => seat.id)
+    // const seatIds = booking.seat.map(seat => seat.id)
     const pricePerSeat = booking.trip.price;
-    const seatCount = booking.seat.length;
+    const seatCount = seatIds.length;
     const totalAmount = pricePerSeat * seatCount;
 
     const amountPaid = successfulPayments.reduce((sum, p) => sum + p.amount, 0) / 100
@@ -77,7 +76,7 @@ export const processBookingPaymentAndIssueTicket = async(paystackRef, res) => {
             route: true,
           },
         },
-        seat: true, // if you use seat in the template (you do)
+       
       },
     });
 

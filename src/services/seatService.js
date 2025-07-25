@@ -94,7 +94,7 @@ const findAvailableSeats = async(tripId, db = prisma) => {
     )
     return availableSeats;
 }
-
+// Reserve a seat for 5 minutes - no Redis Lock used
 const reserveSeat = async({tripId, seatId}, db = prisma) => {
     const now = new Date();
     const expiryCutoff = new Date(now.getTime() - 5 * 60_000);
@@ -127,6 +127,45 @@ const reserveSeat = async({tripId, seatId}, db = prisma) => {
 
     return db.seat.findMany({ where: { id: { in: seatIds } } });
 }
+
+// Reserve a seat for 5 minutes - using Redis Lock
+const reserveSeatWithLock = async ( {tripId, seatId }, db = prisma) => {
+    const lockKey = `lock:trip:${tripId}:seat:${seatId}`;
+    const lockTimeout = 5 * 60_000; // 5 minutes
+    const acquired = await redis.set(lockKey, 'locked', 'PX', lockTimeout, 'NX');
+
+    if (!acquired) {
+        throw new Error('Seat is currently locked by another process');
+    }
+
+    try {
+        const now = new Date();
+        const expiryCutoff = new Date(now.getTime() -5 * 60_000);
+        const seatIds = Array.isArray(seatId) ? seatId : [seatId];
+
+        const updated = await db.seat.updateMany({
+            where: {
+                id: { in: seatIds },
+                tripId,
+                OR: [
+                    { status: 'AVAILABLE' },
+                    { status: 'RESERVED', reservedAt: { not: null, lt: expiryCutoff }}
+                ],
+                NOT: { status: 'BOOKED' }
+            },
+            data: { status: 'RESERVED', reservedAt: now }
+        });
+
+        if (updated.count === 0) {
+            throw new Error('Seat not available');
+        }
+
+        return await db.seat.findMany({ where: { id: { in: seatIds} } });
+    } finally {
+        await redis.del(lockKey)
+    }
+}
+
 
 const confirmSeat = async(seatIds, db = prisma) => {
     const validatedSeatIds = Array.isArray(seatIds) ? seatIds : [seatIds]

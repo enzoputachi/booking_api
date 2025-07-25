@@ -79,11 +79,22 @@ const getUserById = async(userId) => {
     })
 }
 
-const updateUser = async(updatedData, userId ) => {
-    return await prisma.user.update({
+const updateUser = async(updateData, userId ) => {
+    const { name, email, password, ...otherFields } = updateData;
+
+    const dataToUpdate = { name, email, ...otherFields };
+
+    // if password is provided and is not empty, has it
+    if (password && password.trim() !== '') {
+        dataToUpdate.password = await hashPassword(password)
+    }
+
+    const updatedUser = await prisma.user.update({
         where: { id: userId },
-        data: updatedData,
+        data: dataToUpdate,
     })
+
+    return updatedUser;
 }
 
 const deleteUser = async(userId) => {
