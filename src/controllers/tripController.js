@@ -1,3 +1,4 @@
+import { SEAT_HOLD_MS } from "../../config/booking.js";
 import { deleteSeat } from "../services/seatService.js";
 import {
   createTrip,
@@ -142,13 +143,14 @@ const handleSearchTripsByRoute = async(req, res) => {
 
 
 const handleValidateTripDetails = async(req, res) => {
+    const tripId =  parseInt(req.params.tripId, 10); 
+    
   try {
-     const tripId =  parseInt(req.params.tripId, 10); 
+    const validatedTrip = await validateBookableTrip(tripId);
+    console.log('Validated trip:', validatedTrip);
+    
 
-     const validatedTrip = await validateBookableTrip(tripId);
-     console.log("Trip details res:", validatedTrip);
-     
-     res.status(200).json({
+      res.status(200).json({
       status: 'success',
       data: validatedTrip,
      })

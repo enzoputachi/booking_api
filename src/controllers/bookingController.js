@@ -11,8 +11,7 @@ const handleCreateBookingDraft = async(req, res) => {
         // console.log("booking response:", draftPaylod);
         const booking = await createBookingDraft(draftPaylod);
 
-        console.log("booking response:", booking);
-        
+        // console.log("booking response:", booking);
 
         res.status(200).json({
             message: "Booking draft created successfully",

@@ -39,11 +39,11 @@ const handlePaymentIntent = async(req, res) => {
 
 
 const handleVerifyPayment = async(req, res) => {
-    const { reference: paystackRef } = req.params;
+    const {reference: paystackRef, seatIds } = req.body;
 
     try {
         
-        const booking = await processBookingPaymentAndIssueTicket(paystackRef);
+        const booking = await processBookingPaymentAndIssueTicket(paystackRef, seatIds);
         await sendEmail(
             'bookingConfirmation',
             booking.email,
