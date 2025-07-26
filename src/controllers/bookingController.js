@@ -1,4 +1,4 @@
-import { createBookingDraft, getbookingByToken, listBooking } from "../services/bookingService.js";
+import { createBookingDraft, getbookingByToken, listBooking, retrieveBooking } from "../services/bookingService.js";
 import { hashContact } from "../utils/bookingUtils.js";
 
 
@@ -61,6 +61,23 @@ const handleGetBookingByToken = async(req, res) => {
             message: "Booking fetching failed.",
             error: error.message,
         })
+    }
+}
+
+export const handleConfirmBookingByToken = async (req, res) => {
+    const { bookingToken } = req.query;
+    console.log("Booking details:", bookingToken)
+
+    try {
+      const booking = await retrieveBooking(bookingToken);
+
+      return res.status(200).json({
+        message: "Booking retrieved successfully",
+        booking,
+      });
+    } catch (error) {
+      console.error(error);
+      res.status(404).json({ message: error.message });
     }
 }
 
