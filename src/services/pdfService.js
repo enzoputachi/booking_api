@@ -1,8 +1,6 @@
 import PDFDocument from 'pdfkit';
 import QRCode from 'qrcode';
 import prisma from '../models/index.js';
-// import fs from 'fs';
-// import path from 'path';
 
 export const generateTicketPDF = async (bookingToken, res) => {
 
@@ -33,7 +31,6 @@ export const generateTicketPDF = async (bookingToken, res) => {
     mobile,
     amountDue,
     amountPaid,
-    // bookingToken,
     id
   } = booking;
 
@@ -43,206 +40,226 @@ export const generateTicketPDF = async (bookingToken, res) => {
   const isSplit = isSplitPayment ? 'SPLIT' : 'FULL';
 
   // ─── Setup ───────────────────────────────────────────────────────────
-  // const ticketsDir = path.join(process.cwd(), 'tickets');
-  // if (!fs.existsSync(ticketsDir)) fs.mkdirSync(ticketsDir);
+  // Custom page size: 3 inches wide x 8 inches tall (216 x 576 points)
+  const doc = new PDFDocument({ 
+    size: [216, 576], 
+    margins: { top: 10, left: 10, right: 10, bottom: 10 } 
+  });
   
-  // const outputPath = path.join(ticketsDir, `${bookingToken}.pdf`);
-  // const stream = doc.pipe(fs.createWriteStream(outputPath));
-  const doc = new PDFDocument({ size: [800, 300], margins: { top: 0, left: 0, right: 0, bottom: 0 } });
   res.setHeader('Content-Type', 'application/pdf');
   res.setHeader('Content-Disposition', `inline; filename="${bookingToken}.pdf"`)
   doc.pipe(res);
 
   // ─── Colors ──────────────────────────────────────────────────────────
-  const darkGray = '#333333';
-  const mediumGray = '#666666';
-  const lightGray = '#999999';
-  const veryLightGray = '#e8e8e8';
+  const black = '#000000';
+
+  // ─── Helper Functions ────────────────────────────────────────────────
+  const formatDate = (date) => {
+    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    
+    const dayName = days[date.getDay()];
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = months[date.getMonth()];
+    const year = date.getFullYear();
+    
+    return `${dayName} ${day} ${month} ${year}`;
+  };
+
+  const formatPrintDateTime = (date) => {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const month = months[date.getMonth()];
+    const day = String(date.getDate()).padStart(2, '0');
+    const year = String(date.getFullYear()).slice(-2);
+    const time = date.toLocaleTimeString('en-US', { 
+      hour12: true, 
+      hour: 'numeric', 
+      minute: '2-digit',
+      second: '2-digit'
+    });
+    
+    return `${month} ${day}, ${year} - ${time}`;
+  };
+
+  // Helper function to add multi-line text and return the new Y position
+  const addMultiLineText = (doc, text, x, y, options = {}) => {
+    const textHeight = doc.heightOfString(text, options);
+    doc.text(text, x, y, options);
+    return y + textHeight;
+  };
 
   const boardingTime = new Date(departTime);
   boardingTime.setMinutes(boardingTime.getMinutes() - 30);
-  const formattedBoardingTime = boardingTime.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
+  const formattedBoardingTime = boardingTime.toLocaleTimeString('en-US', { hour12: true, hour: 'numeric', minute: '2-digit' });
 
-  // ─── Helper Functions ────────────────────────────────────────────────
-  const drawBusIcon = (x, y, size = 24) => {
-  // Main bus body (rectangle)
-  doc.rect(x, y + size * 0.2, size, size * 0.5)
-    .fill(darkGray);
-  
-  // Front of bus (small rectangle)
-  doc.rect(x + size, y + size * 0.25, size * 0.15, size * 0.4)
-    .fill(darkGray);
-  
-  // Windows (3 small rectangles)
-  doc.rect(x + size * 0.1, y + size * 0.3, size * 0.2, size * 0.15)
-    .fill('white');
-  doc.rect(x + size * 0.4, y + size * 0.3, size * 0.2, size * 0.15)
-    .fill('white');
-  doc.rect(x + size * 0.7, y + size * 0.3, size * 0.2, size * 0.15)
-    .fill('white');
-  
-  // Front wheel
-  doc.circle(x + size * 0.2, y + size * 0.8, size * 0.08)
-    .fill(darkGray);
-  
-  // Back wheel
-  doc.circle(x + size * 0.8, y + size * 0.8, size * 0.08)
-    .fill(darkGray);
-};
+  // ─── Header Section ──────────────────────────────────────────────────
+  let currentY = 15;
 
+  // Company name - centered and bold
+  doc.fillColor(black)
+    .font('Helvetica-Bold')
+    .fontSize(12)
+    .text('CORPERS DRIVE', 0, currentY, { align: 'center', width: doc.page.width });
 
-  // ─── Background Gradient Effect ──────────────────────────────────────
-  doc.rect(0, 0, 800, 300).fill(veryLightGray);
+  currentY += 15;
 
-  // ─── Main Content Section ────────────────────────────────────────────
-  const mainWidth = 600;
-  const stubWidth = 180;
+  doc.text('BUS TICKET', 0, currentY, { align: 'center', width: doc.page.width });
 
-  doc.rect(0, 0, mainWidth, 300).fill('#f5f5f5');
+  currentY += 18;
 
-  doc.rect(5, 5, 790, 290)
-    .fillOpacity(0.1)
-    .fill(darkGray)
-    .fillOpacity(1);
+  // Address and phone - centered
+  doc.font('Helvetica')
+    .fontSize(8)
+    .text('TRANSPORT COMPANY', 0, currentY, { align: 'center', width: doc.page.width });
 
-  // ─── Header ──────────────────────────────────────────────────────────
-  doc.fillColor(darkGray)
-    .font('Times-Bold')
-    .fontSize(32)
-    .text('BUS TICKET', 20, 20);
+  currentY += 12;
 
-  doc.fillColor(mediumGray)
-    .font('Times-Roman')
-    .fontSize(10)
-    .text('CORPERS DRIVE', 20, 55);
+  doc.text('Tel: Contact Info', 0, currentY, { align: 'center', width: doc.page.width });
 
-  doc.fillColor(darkGray)
-    .font('Times-Bold')
-    .fontSize(10)
-    .text(`${origin.toUpperCase()}  ${destination.toUpperCase()}`, 380, 25, { width: 160, align: 'left' });
+  currentY += 20;
 
-  // ─── Passenger Info ──────────────────────────────────────────────────
-  const passengerY = 85;
+  // ─── Ticket Details Section ──────────────────────────────────────────
+  const leftMargin = 10;
+  const textWidth = 196;
+  const sectionSpacing = 3;
 
-  doc.fillColor(mediumGray)
+  // Trip code
+  doc.font('Helvetica-Bold')
+    .fontSize(10);
+  currentY = addMultiLineText(doc, `Trip Code: ${tripCode}`, leftMargin, currentY, { width: textWidth });
+  currentY += sectionSpacing;
+
+  // Route - separate From and To on different lines
+  doc.font('Helvetica-Bold')
+    .fontSize(10);
+  currentY = addMultiLineText(doc, `From: ${origin}`, leftMargin, currentY, { width: textWidth });
+  currentY += 3;
+  currentY = addMultiLineText(doc, `To: ${destination}`, leftMargin, currentY, { width: textWidth });
+  currentY += sectionSpacing;
+
+  // Seat numbers
+  currentY = addMultiLineText(doc, `Seat: ${seatNumbers}`, leftMargin, currentY, { width: textWidth });
+  currentY += sectionSpacing;
+
+  // Passenger name with label
+  doc.font('Helvetica-Bold')
+    .fontSize(10);
+  currentY = addMultiLineText(doc, 'Passenger Name:', leftMargin, currentY, { width: textWidth });
+  currentY += 2;
+  doc.font('Helvetica')
+    .fontSize(10);
+  currentY = addMultiLineText(doc, passengerName?.toUpperCase() || 'N/A', leftMargin, currentY, { width: textWidth });
+  currentY += sectionSpacing;
+
+  // Phone with label
+  if (mobile) {
+    doc.font('Helvetica-Bold')
+      .fontSize(10);
+    currentY = addMultiLineText(doc, 'Phone:', leftMargin, currentY, { width: textWidth });
+    currentY += 2;
+    doc.font('Helvetica')
+      .fontSize(10);
+    currentY = addMultiLineText(doc, mobile, leftMargin, currentY, { width: textWidth });
+    currentY += sectionSpacing;
+  }
+
+  // Email with label
+  if (email) {
+    doc.font('Helvetica-Bold')
+      .fontSize(10);
+    currentY = addMultiLineText(doc, 'Email:', leftMargin, currentY, { width: textWidth });
+    currentY += 2;
+    doc.font('Helvetica')
+      .fontSize(10);
+    currentY = addMultiLineText(doc, email, leftMargin, currentY, { width: textWidth });
+    currentY += sectionSpacing;
+  }
+
+  // Amount Due
+  doc.font('Helvetica-Bold')
+    .fontSize(10);
+  currentY = addMultiLineText(doc, `AMOUNT DUE: NGN${amountDue}`, leftMargin, currentY, { width: textWidth });
+  currentY += sectionSpacing;
+
+  // Amount Paid
+  if (amountPaid) {
+    currentY = addMultiLineText(doc, `AMOUNT PAID: NGN${amountPaid}`, leftMargin, currentY, { width: textWidth });
+    currentY += sectionSpacing;
+  }
+
+  // Payment Type
+  currentY = addMultiLineText(doc, `PAYMENT TYPE: ${isSplit}`, leftMargin, currentY, { width: textWidth });
+  currentY += sectionSpacing;
+
+  // Departure date - handle long date text by wrapping
+  const departureDate = formatDate(new Date(departTime));
+  currentY = addMultiLineText(doc, `Departure Date: ${departureDate}`, leftMargin, currentY, { width: textWidth });
+  currentY += sectionSpacing;
+
+  // Boarding time
+  currentY = addMultiLineText(doc, `Boarding Time: ${formattedBoardingTime}`, leftMargin, currentY, { width: textWidth });
+  currentY += sectionSpacing;
+
+  // Print date and time - handle long date/time text by wrapping
+  const printDateTime = formatPrintDateTime(new Date());
+  currentY = addMultiLineText(doc, `Print Date: ${printDateTime}`, leftMargin, currentY, { width: textWidth });
+  currentY += 15;
+
+  // ─── Terms and Conditions Section ───────────────────────────────────
+  doc.font('Helvetica-Bold')
     .fontSize(9)
-    .text('PASSENGER', 20, passengerY);
-  doc.fillColor(darkGray)
-    .font('Times-Bold')
-    .fontSize(14)
-    .text(passengerName?.toUpperCase() || 'JOHN DOE', 20, passengerY + 12, { width: 160, align: 'left' });
+    .text('TERMS AND CONDITIONS', leftMargin, currentY, { width: 196 });
+  currentY += 15;
 
-  doc.fillColor(mediumGray)
-    .fontSize(9)
-    .text('AMOUNT DUE', 200, passengerY);
-  doc.fillColor(darkGray)
-    .font('Times-Bold')
-    .fontSize(14)
-    .text(`NGN${amountDue}` || 'N/A', 200, passengerY + 12);
+  // Updated Terms and Conditions
+  const termsAndConditions = [
+    "1. Bookings are valid only after full payment. Tickets are non-transferable and expire 30 minutes after departure.",
+    "2. Commitment fees are non-refundable. A 50% refund is possible if full payment was made.",
+    "3. Arrive at least 30 minutes early with valid ID if required.",
+    "4. Misconduct, smoking, alcohol, or drugs are strictly prohibited.",
+    "5. Sprinter buses allow 10kg luggage per passenger; excess attracts extra fees.",
+    "6. We are not liable for delays, missed trips, or lost items. Travel is at your own risk.",
+    "7. Cancellations must be made 24 hours in advance. Refunds are at our discretion.",
+    "8. Pickups in Ijebu-Ode, Shagamu, and IFE require full prepayment. Be punctual.",
+    "9. Terms follow Nigerian law and FRSC guidelines.",
+    "10. Use of our service means you accept all terms. Contact: corpersdrive@gmail.com or 08141241741."
+  ];
 
-  const tripDate = new Date(departTime);
-  const formattedDate = `${String(tripDate.getDate()).padStart(2, '0')} ${tripDate.toLocaleDateString('en-US', { month: 'short' }).toUpperCase()} ${tripDate.getFullYear()}`;
+  doc.font('Helvetica')
+    .fontSize(7);
 
-  doc.fillColor(mediumGray)
-    .fontSize(9)
-    .text('DATE', 340, passengerY);
-  doc.fillColor(darkGray)
-    .font('Times-Bold')
-    .fontSize(14)
-    .text(formattedDate, 340, passengerY + 12);
-
-  doc.fillColor(mediumGray)
-    .fontSize(9)
-    .text('SEAT', 500, passengerY);
-  doc.fillColor(darkGray)
-    .font('Times-Bold')
-    .fontSize(14)
-    .text(seatNumbers || 'N/A', 500, passengerY + 12);
-
-  // ─── Large Route Display ─────────────────────────────────────────────
-  const destinationY = 140;
-
-  doc.fillColor(darkGray)
-    .font('Times-Bold')
-    .fontSize(14)
-    .text(origin.toUpperCase(), 20, destinationY, { width: 200, align: 'left' });
-
-  drawBusIcon(240, destinationY + 10);
-
-  doc.fontSize(14)
-    .text(destination.toUpperCase(), 290, destinationY, { width: 200, align: 'left' });
-
-  
-  // ─── Gate & Boarding ─────────────────────────────────────────────────
-  const gateY = 220;
-
-  doc.fillColor(mediumGray)
-    .fontSize(9)
-    .text('PAYMENT TYPE', 20, gateY);
-  doc.fillColor(darkGray)
-    .font('Times-Bold')
-    .fontSize(20)
-    .text(isSplit || 'N/A', 20, gateY + 12);
-
-  doc.fillColor(mediumGray)
-    .fontSize(9)
-    .text('BOARDING TIME', 200, gateY);
-  doc.fillColor(darkGray)
-    .font('Times-Bold')
-    .fontSize(20)
-    .text(formattedBoardingTime, 200, gateY + 12);
-
-
-  // ─── Divider ─────────────────────────────────────────────────────────
-  doc.dash(3, { space: 5 })
-    .moveTo(mainWidth, 0)
-    .lineTo(mainWidth, 300)
-    .strokeColor(lightGray)
-    .lineWidth(2)
-    .stroke()
-    .undash();
-
-  // ─── Stub ────────────────────────────────────────────────────────────
-  const stubX = mainWidth + 10;
-  const stubInfoY = 60;
-  const stubSpacing = 35;
-
-  doc.fillColor(darkGray)
-    .font('Times-Bold')
-    .fontSize(7)
-    .text(`${origin.toUpperCase()} to ${destination.toUpperCase()}`, stubX, 20, { width: 160, align: 'left' });
-
-  doc.fillColor(mediumGray).fontSize(8).text('PASSENGER', stubX, stubInfoY);
-  doc.fillColor(darkGray).font('Times-Bold').fontSize(10).text(passengerName.toUpperCase(), stubX, stubInfoY + 10, { width: 160, align: 'left' });
-
-  doc.fillColor(mediumGray).fontSize(8).text('PAYMENT TYPE', stubX, stubInfoY + stubSpacing);
-  doc.fillColor(darkGray).font('Times-Bold').fontSize(10).text(isSplit, stubX, stubInfoY + stubSpacing + 10);
-
-  doc.fillColor(mediumGray).fontSize(8).text('AMOUNT DUE', stubX, stubInfoY + stubSpacing * 2);
-  doc.fillColor(darkGray).font('Times-Bold').fontSize(10).text(`NGN${amountDue}`, stubX, stubInfoY + stubSpacing * 2 + 10);
-
-  doc.fillColor(mediumGray).fontSize(8).text('DATE', stubX, stubInfoY + stubSpacing * 3);
-  doc.fillColor(darkGray).font('Times-Bold').fontSize(10).text(formattedDate, stubX, stubInfoY + stubSpacing * 3 + 10);
-
-  doc.fillColor(mediumGray).fontSize(8).text('SEAT', stubX, stubInfoY + stubSpacing * 4);
-  doc.fillColor(darkGray).font('Times-Bold').fontSize(10).text(seatNumbers, stubX, stubInfoY + stubSpacing * 4 + 10);
+  termsAndConditions.forEach((condition, index) => {
+    const textHeight = doc.heightOfString(condition, { width: 196 });
+    
+    // Check if we need a new page
+    if (currentY + textHeight > doc.page.height - 20) {
+      doc.addPage();
+      currentY = 15;
+    }
+    
+    doc.text(condition, leftMargin, currentY, { width: 196, align: 'justify' });
+    currentY += textHeight + 6;
+  });
 
   // ─── QR Code ─────────────────────────────────────────────────────────
   // try {
   //   const qrUrl = `${process.env.APP_URL}/api/verify/${bookingToken}`;
-  //   const buffer = await QRCode.toBuffer(qrUrl, { width: 100 });
-  //   doc.image(buffer, 700, 180, { width: 80, height: 80 });
+  //   const buffer = await QRCode.toBuffer(qrUrl, { width: 60 });
+    
+  //   // Add QR code at bottom if there's space
+  //   if (currentY < doc.page.height - 70) {
+  //     const qrSize = 50;
+  //     const qrX = (doc.page.width - qrSize) / 2; // Center horizontally
+  //     doc.image(buffer, qrX, currentY + 5, { width: qrSize, height: qrSize });
+  //   }
   // } catch (err) {
-  //   doc.fillColor('red').fontSize(10).text('QR Code Failed', 650, 260);
+  //   console.warn('QR Code generation failed:', err);
+  //   // Add fallback text if QR fails
+  //   if (currentY < doc.page.height - 30) {
+  //     doc.fillColor('red').fontSize(8).text('QR Code Failed', leftMargin, currentY + 5);
+  //   }
   // }
 
   // ─── Finalize ────────────────────────────────────────────────────────
   doc.end();
-  
-  // await new Promise((resolve, reject) => {
-  //   stream.on('finish', resolve);
-  //   stream.on('error', reject);
-  // });
-
-  // return { path: outputPath, exists: fs.existsSync(outputPath) };
 };

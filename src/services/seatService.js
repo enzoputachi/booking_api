@@ -1,3 +1,4 @@
+import { SEAT_HOLD_MS } from "../../config/booking.js";
 import { SeatStatus } from "../../prisma/src/generated/prisma/index.js";
 import prisma from "../models/index.js";
 // import { redlock } from "../models/redis.js";
@@ -97,7 +98,7 @@ const findAvailableSeats = async(tripId, db = prisma) => {
 // Reserve a seat for 5 minutes - no Redis Lock used
 const reserveSeat = async({tripId, seatId}, db = prisma) => {
     const now = new Date();
-    const expiryCutoff = new Date(now.getTime() - 5 * 60_000);
+    const expiryCutoff = new Date(now.getTime() - SEAT_HOLD_MS);
     const seatIds = Array.isArray(seatId) ? seatId : [seatId];
     console.log("Twice:", seatId, tripId);
     
@@ -131,7 +132,7 @@ const reserveSeat = async({tripId, seatId}, db = prisma) => {
 // Reserve a seat for 5 minutes - using Redis Lock
 const reserveSeatWithLock = async ( {tripId, seatId }, db = prisma) => {
     const lockKey = `lock:trip:${tripId}:seat:${seatId}`;
-    const lockTimeout = 5 * 60_000; // 5 minutes
+    const lockTimeout = SEAT_HOLD_MS; // 5 minutes
     const acquired = await redis.set(lockKey, 'locked', 'PX', lockTimeout, 'NX');
 
     if (!acquired) {
@@ -140,7 +141,7 @@ const reserveSeatWithLock = async ( {tripId, seatId }, db = prisma) => {
 
     try {
         const now = new Date();
-        const expiryCutoff = new Date(now.getTime() -5 * 60_000);
+        const expiryCutoff = new Date(now.getTime() -SEAT_HOLD_MS);
         const seatIds = Array.isArray(seatId) ? seatId : [seatId];
 
         const updated = await db.seat.updateMany({

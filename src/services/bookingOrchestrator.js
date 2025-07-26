@@ -14,7 +14,7 @@ pathFinder();
 
 
 
-export const processBookingPaymentAndIssueTicket = async({paystackRef, seatIds}, res) => {
+export const processBookingPaymentAndIssueTicket = async({ paystackRef, seatIds}, res) => {
     const paymentRecord = await verifyPayment(paystackRef);
     const bookingId = paymentRecord.bookingId;
 
@@ -90,12 +90,13 @@ export const processBookingPaymentAndIssueTicket = async({paystackRef, seatIds},
       amountDue,
     });
 
-
+    // Since payment was successful, force confirm
+   
     
-    await prisma.seat.updateMany({
-        where: { id: { in: seatIds } },
-        data: { status: SeatStatus.BOOKED }
-    })
+    // await prisma.seat.updateMany({
+    //     where: { id: { in: seatIds } },
+    //     data: { status: SeatStatus.BOOKED, bookingId: bookingId }
+    // })
 
     await confirmBookingDraft({ bookingId: booking.id, seatIds})
 

@@ -3,17 +3,39 @@
 import { initializePaystackTransaction, verifyPaystackTransaction } from './paystackService.js';
 import prisma from '../models/index.js';
 import { PaymentStatus } from "../../prisma/src/generated/prisma/index.js";
+import { validateSeatHold } from '../utils/bookingUtils.js';
 
 // create
-const createPaymentIntent = async({bookingId, amount, channel, email}, db = prisma) => {
+const createPaymentIntent = async({bookingId, amount, channel, seatIds, email}, db = prisma) => {
 
     const booking =  await db.booking.findUnique({
         where: { id: bookingId },
-        include: { payment: true },
+        include: { payment: true, seat: true, trip: true },
     })
 
     if (!booking) throw new Error('Booking not found');
     // if (booking.payment) throw new Error('Payment already exists for this bookinf');
+
+     if (!seatIds || !Array.isArray(seatIds) || seatIds.length === 0) {
+        throw new Error('No seat IDs provided');
+    }
+
+    const seatsInTrip = await db.seat.findMany({
+        where: {
+            id: { in: seatIds },
+            tripId: booking.tripId
+        }
+    });
+
+    if (seatsInTrip.length !== seatIds.length) {
+        throw new Error('Some seats do not belong to this trip');
+    }
+    
+    const validation = await validateSeatHold(seatIds, booking.tripId, db)
+
+    if (!validation.isValid) {
+        throw new Error('Hold expired on one or more seats—please retry.');
+    }
 
     const { reference, authorization_url } = await initializePaystackTransaction({ email, amount })
 
