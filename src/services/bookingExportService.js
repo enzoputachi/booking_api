@@ -6,6 +6,9 @@ const createCSVParser = () => {
       { label: "Booking ID", value: "id" },
       { label: "Trip ID", value: "tripId" },
       { label: "Passenger Name", value: "passengerName" },
+      { label: "Passenger Address", value: "passengerAddress" }, // ✅ Added missing field
+      { label: "Next of Kin Name", value: "nextOfKinName" }, // ✅ Added missing field
+      { label: "Next of Kin Phone", value: "nextOfKinPhone" }, // ✅ Added missing field
       { label: "Email", value: "email" },
       { label: "Mobile", value: "mobile" },
       { label: "Status", value: "status" },
@@ -14,6 +17,7 @@ const createCSVParser = () => {
       { label: "Trip Destination", value: "trip.route.destination" },
       { label: "Seat Numbers", value: "seatNumbers" },
       { label: "Amount Paid", value: "amountPaid" },
+      { label: "Amount Due", value: "amountDue" }, // ✅ Added for completeness
       { label: "Payment Complete", value: "isPaymentComplete" },
       { label: "Payment Channel", value: "paymentChannel" },
       { label: "Payment Provider", value: "paymentProvider" },
@@ -26,7 +30,7 @@ const createCSVParser = () => {
 const transformBookingData = (bookings) => bookings.map(booking => ({
     ...booking,
     createdAt: booking.createdAt.toISOString(),
-    seatNumbers: booking.seat?.map(s => s.seatNo).join(', ') || "", // Fixed: seatNo instead of seatNumber
+    seatNumbers: booking.seat?.map(s => s.seatNo).join(', ') || "",
     // Flatten nested trip and route data
     'trip.route.origin': booking.trip?.route?.origin || '',
     'trip.route.destination': booking.trip?.route?.destination || '',
@@ -36,7 +40,6 @@ const transformBookingData = (bookings) => bookings.map(booking => ({
     paymentStatus: booking.payment?.[0]?.status || ''
 }));
 
-// Helper functions remain the same
 const buildWhereClause = (filters) => {
   const where = {};
   if (filters.startDate) where.createdAt = { ...where.createdAt, gte: new Date(filters.startDate) };
@@ -53,7 +56,7 @@ const fetchBookingsWithRelations = async (whereClause) => {
       trip: { 
         select: { 
           id: true,
-          price: true, // Using price instead of fare since fare doesn't exist
+          price: true,
           route: {
             select: {
               origin: true,
@@ -62,7 +65,7 @@ const fetchBookingsWithRelations = async (whereClause) => {
           }
         } 
       },
-      seat: { select: { seatNo: true, status: true } }, // Fixed: seatNo instead of seatNumber
+      seat: { select: { seatNo: true, status: true } },
       payment: { select: { amount: true, channel: true, provider: true, status: true } }
     },
     orderBy: { createdAt: 'desc' }
