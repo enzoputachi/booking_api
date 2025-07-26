@@ -10,7 +10,14 @@ pathFinder()
 
 
 const handlePaymentIntent = async(req, res) => {
-    const { email, amount, bookingId, channel, isSplitPayment } = req.body;
+    const { email, amount, bookingId, seatIds, channel, isSplitPayment } = req.body;
+
+     if (!email || !amount || !bookingId || !seatIds || !Array.isArray(seatIds)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Missing required fields: email, amount, bookingId, seatIds'
+            });
+    }    
 
 
     try {
@@ -22,7 +29,7 @@ const handlePaymentIntent = async(req, res) => {
             })
         };
 
-        const payment = await createPaymentIntent({email, amount, bookingId, channel})
+        const payment = await createPaymentIntent({email, amount, seatIds, bookingId, channel})
 
         console.log("LOG Payment Ref:", payment);
         
@@ -41,9 +48,11 @@ const handlePaymentIntent = async(req, res) => {
 const handleVerifyPayment = async(req, res) => {
     const {reference: paystackRef, seatIds } = req.body;
 
+    console.log("Paystack Ref and seadis:", paystackRef, seatIds)
+
     try {
         
-        const booking = await processBookingPaymentAndIssueTicket(paystackRef, seatIds);
+        const booking = await processBookingPaymentAndIssueTicket({paystackRef, seatIds});
         await sendEmail(
             'bookingConfirmation',
             booking.email,
