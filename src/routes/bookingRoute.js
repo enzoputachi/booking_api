@@ -1,5 +1,5 @@
 import express from 'express';
-import { handleCreateBookingDraft, handleGetBookingByToken, handleListBookings } from '../controllers/bookingController.js';
+import { handleConfirmBookingByToken, handleCreateBookingDraft, handleGetBookingByToken, handleListBookings } from '../controllers/bookingController.js';
 
 
 const router = express.Router();
@@ -86,6 +86,8 @@ const router = express.Router();
 router.post('/', handleCreateBookingDraft);
 
 router.get('/', handleListBookings)
+
+router.get('/confirm', handleConfirmBookingByToken)
 
 /**
  * @swagger
