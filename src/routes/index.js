@@ -11,6 +11,7 @@ import dashboardStatsRouter from './dashboardStatsRoute.js';
 import streamTicketPDFRouter from './ticketRoute.js'
 import retrieveBookingRouter from './retrieveBookingRoute.js';
 import supportRoute from './supportRoute.js';
+import exportBookingRouter from './exportBookingRoute.js';
 
 
 const router = express.Router();
@@ -27,5 +28,6 @@ router.use('/dashboardStats', dashboardStatsRouter);
 router.use('/tickets', streamTicketPDFRouter);
 router.use('/retrieve', retrieveBookingRouter);
 router.use('/support', supportRoute)
+router.use('/export', exportBookingRouter)
 
 export default router;
