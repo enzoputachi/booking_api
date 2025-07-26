@@ -80,7 +80,7 @@ router.post('/initialize', handlePaymentIntent);
  *       500:
  *         description: Internal server error
  */
-router.post('/verify/:reference', handleVerifyPayment);
+router.post('/verify', handleVerifyPayment);
 
 /**
  * @swagger
