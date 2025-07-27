@@ -124,10 +124,10 @@ export const generateTicketPDF = async (bookingToken, res) => {
   const sectionSpacing = 3;
 
   // Trip code
-  doc.font('Helvetica-Bold')
-    .fontSize(10);
-  currentY = addMultiLineText(doc, `Trip Code: ${tripCode}`, leftMargin, currentY, { width: textWidth });
-  currentY += sectionSpacing;
+  // doc.font('Helvetica-Bold')
+  //   .fontSize(10);
+  // currentY = addMultiLineText(doc, `Trip Code: ${tripCode}`, leftMargin, currentY, { width: textWidth });
+  // currentY += sectionSpacing;
 
   // Route - separate From and To on different lines
   doc.font('Helvetica-Bold')
