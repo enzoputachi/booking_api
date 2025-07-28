@@ -182,7 +182,7 @@ const confirmBookingDraft = async ({ bookingId, seatIds }, db = prisma) => {
       where: {
         id: { in: seatIds },
         status: "RESERVED",
-        reservedAt: { gte: holdCutoff },
+        // reservedAt: { gte: holdCutoff },
         bookingId: null,
       },
       data: {

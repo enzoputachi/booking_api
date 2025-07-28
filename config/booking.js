@@ -1,2 +1,2 @@
 
-export const SEAT_HOLD_MS = 5 * 60_000; // 5 minutes
+export const SEAT_HOLD_MS = 10 * 60_000; // 5 minutes

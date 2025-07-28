@@ -6,18 +6,19 @@ const createCSVParser = () => {
       { label: "Booking ID", value: "id" },
       { label: "Trip ID", value: "tripId" },
       { label: "Passenger Name", value: "passengerName" },
-      { label: "Passenger Address", value: "passengerAddress" }, // ✅ Added missing field
-      { label: "Next of Kin Name", value: "nextOfKinName" }, // ✅ Added missing field
-      { label: "Next of Kin Phone", value: "nextOfKinPhone" }, // ✅ Added missing field
+      { label: "Passenger Address", value: "passengerAddress" },
+      { label: "Next of Kin Name", value: "nextOfKinName" },
+      { label: "Next of Kin Phone", value: "nextOfKinPhone" },
       { label: "Email", value: "email" },
       { label: "Mobile", value: "mobile" },
       { label: "Status", value: "status" },
       { label: "Created At", value: "createdAt" },
       { label: "Trip Origin", value: "trip.route.origin" },
       { label: "Trip Destination", value: "trip.route.destination" },
+      { label: "Bus Plate Number", value: "trip.bus.plateNo" }, // ✅ Added bus plate number
       { label: "Seat Numbers", value: "seatNumbers" },
       { label: "Amount Paid", value: "amountPaid" },
-      { label: "Amount Due", value: "amountDue" }, // ✅ Added for completeness
+      { label: "Amount Due", value: "amountDue" },
       { label: "Payment Complete", value: "isPaymentComplete" },
       { label: "Payment Channel", value: "paymentChannel" },
       { label: "Payment Provider", value: "paymentProvider" },
@@ -34,6 +35,8 @@ const transformBookingData = (bookings) => bookings.map(booking => ({
     // Flatten nested trip and route data
     'trip.route.origin': booking.trip?.route?.origin || '',
     'trip.route.destination': booking.trip?.route?.destination || '',
+    // Flatten bus data
+    'trip.bus.plateNo': booking.trip?.bus?.plateNo || '', // ✅ Added bus plate number mapping
     // Flatten payment data (get the first payment record if multiple exist)
     paymentChannel: booking.payment?.[0]?.channel || '',
     paymentProvider: booking.payment?.[0]?.provider || '',
@@ -61,6 +64,11 @@ const fetchBookingsWithRelations = async (whereClause) => {
             select: {
               origin: true,
               destination: true
+            }
+          },
+          bus: { // ✅ Added bus relation
+            select: {
+              plateNo: true
             }
           }
         } 

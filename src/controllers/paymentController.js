@@ -4,6 +4,7 @@ import { sendEmail } from "../services/mailService.js";
 import prisma from "../models/index.js";
 import dotenv from 'dotenv';
 import pathFinder from "../utils/pathFinder.js";
+import { validateSeatHold } from "../utils/bookingUtils.js";
 dotenv.config();
 pathFinder()
 
@@ -18,7 +19,6 @@ const handlePaymentIntent = async(req, res) => {
                 message: 'Missing required fields: email, amount, bookingId, seatIds'
             });
     }    
-
 
     try {
 
@@ -47,6 +47,7 @@ const handlePaymentIntent = async(req, res) => {
 
 const handleVerifyPayment = async(req, res) => {
     const {reference: paystackRef, seatIds } = req.body;
+
 
     console.log("Paystack Ref and seadis:", paystackRef, seatIds)
 

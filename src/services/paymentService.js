@@ -31,11 +31,11 @@ const createPaymentIntent = async({bookingId, amount, channel, seatIds, email}, 
         throw new Error('Some seats do not belong to this trip');
     }
     
-    const validation = await validateSeatHold(seatIds, booking.tripId, db)
+    // const validation = await validateSeatHold(seatIds, booking.tripId, db)
 
-    if (!validation.isValid) {
-        throw new Error('Hold expired on one or more seats—please retry.');
-    }
+    // if (!validation.isValid) {
+    //     throw new Error('Hold expired on one or more seats—please retry.');
+    // }
 
     const { reference, authorization_url } = await initializePaystackTransaction({ email, amount })
 
