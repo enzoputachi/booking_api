@@ -1,4 +1,4 @@
-import { createBookingDraft, getbookingByToken, listBooking, retrieveBooking } from "../services/bookingService.js";
+import { createBookingDraft, getAllBookings, getbookingByToken, listBooking, retrieveBooking } from "../services/bookingService.js";
 import { hashContact } from "../utils/bookingUtils.js";
 
 
@@ -31,7 +31,7 @@ const handleCreateBookingDraft = async(req, res) => {
 
 const handleListBookings = async(req, res) => {
     try {
-        const bookings = await listBooking()
+        const bookings = await getAllBookings()
 
         res.status(200).json({
             status: "success",

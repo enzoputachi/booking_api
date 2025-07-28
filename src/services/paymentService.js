@@ -86,7 +86,7 @@ const verifyPayment = async(paystackRef, db= prisma) => {
     return updated;
 }
 
-const getAllPayments = async(
+const getAllPaymentsOff = async(
     { filter = {}, sort = { createdAt: 'desc' }, page = 1, pageSize = 10 } = {},
     db = prisma,
     ) => {
@@ -120,6 +120,28 @@ const getAllPayments = async(
             hasNext: skip + take < total,
         }
         
+}
+
+const getAllPayments = async(
+    { filter = {}, sort = { createdAt: 'desc' } } = {},
+    db = prisma,
+) => {
+    const where = {};
+    
+    if (filter) {
+        if (filter.status) where.status = filter.status;
+        if (filter.bookingId) where.bookingId = filter.bookingId;
+    }
+    
+    const payments = await db.payment.findMany({
+        where,
+        orderBy: sort || { createdAt: 'desc'},
+        include: {
+            booking: true,
+        }
+    });
+
+    return payments;
 }
 
 const getPaymentById = async(id, db = prisma) => {

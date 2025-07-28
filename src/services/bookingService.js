@@ -75,6 +75,36 @@ const listBooking = async(
     }
 }
 
+const getAllBookings = async(
+    { search, sort } = {},
+    db = prisma
+) => {
+    const where = {};
+
+    if (search) {
+        if (search.status) where.status = search.status;
+        if (search.tripId) where.tripId = search.tripId;
+        if (search.bookingToken) where.bookingToken = search.bookingToken;
+    }
+
+    const bookings = await db.booking.findMany({
+        where,
+        orderBy: sort || { createdAt: 'desc'},
+        include: {
+            trip: {
+                include: {
+                    route: true,
+                    bus: true,
+                }
+            },
+            seat: true,
+            payment: true,
+        }
+    });
+
+    return bookings;
+}
+
 const confirmBooking = async(bookingId, db = prisma) => {
     const confirmed = await db.booking.update({
         where: { id: bookingId },
@@ -216,4 +246,6 @@ export {
     listBooking,
     confirmBookingDraft,
     getbookingByToken,
+    getAllBookings,
+
 }

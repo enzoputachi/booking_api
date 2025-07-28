@@ -12,6 +12,7 @@ import streamTicketPDFRouter from './ticketRoute.js'
 import retrieveBookingRouter from './retrieveBookingRoute.js';
 import supportRoute from './supportRoute.js';
 import exportBookingRouter from './exportBookingRoute.js';
+import freeExpiredRouter from './freeSeatsRoute.js'
 
 
 const router = express.Router();
@@ -29,5 +30,6 @@ router.use('/tickets', streamTicketPDFRouter);
 router.use('/retrieve', retrieveBookingRouter);
 router.use('/support', supportRoute)
 router.use('/export', exportBookingRouter)
+router.use('/freeExpired', freeExpiredRouter)
 
 export default router;

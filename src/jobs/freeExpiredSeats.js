@@ -1,3 +1,4 @@
+import { SEAT_HOLD_MS } from "../../config/booking.js";
 import prisma from "../models/index.js";
 
 
@@ -100,4 +101,76 @@ export const freeExpiredSeats = async() => {
   );
 
   return updateSeatsResult.count;
+}
+
+export const freeExpiredSeatsService = async() => {
+    const now = new Date();
+    const threshold = new Date(now.getTime() - SEAT_HOLD_MS);
+    
+    const expired = await prisma.seat.findMany({
+        where: {
+            status: "RESERVED",
+            reservedAt: { lt: threshold }
+        },
+        select: { id: true, bookingId: true }
+    });
+
+    if (expired.length === 0) {
+        console.log('No expired seats to free.');
+        return 0;
+    }
+
+    const expiredSeatIds = expired.map(seat => seat.id);
+    
+    // Fix: map over expired array instead of expiredSeatIds, and handle null bookingIds
+    const expiredBookingIds = expired
+        .map(seat => seat.bookingId)
+        .filter(id => id !== null && typeof id === "number");
+
+    let bookingIdsToDelete = [];
+    
+    // Only query for bookings if we have valid booking IDs
+    if (expiredBookingIds.length > 0) {
+        const bookingsToDelete = await prisma.booking.findMany({
+            where: {
+                id: { in: expiredBookingIds },
+                status: "PENDING",
+            },
+            select: { id: true },
+        });
+        
+        bookingIdsToDelete = bookingsToDelete.map(b => b.id);
+    }
+
+    // Run the transaction - will work even if bookingIdsToDelete is empty
+    const [deletePaymentsResult, deleteBookingsResult, updateSeatsResult] =
+        await prisma.$transaction([
+            // Delete payments (will delete 0 if bookingIdsToDelete is empty)
+            prisma.payment.deleteMany({
+                where: { bookingId: { in: bookingIdsToDelete } },
+            }),
+
+            // Delete bookings (will delete 0 if bookingIdsToDelete is empty)
+            prisma.booking.deleteMany({
+                where: { id: { in: bookingIdsToDelete } },
+            }),
+
+            // Update seats to AVAILABLE (this always runs regardless of bookings)
+            prisma.seat.updateMany({
+                where: { id: { in: expiredSeatIds } },
+                data: {
+                    status: "AVAILABLE",
+                    reservedAt: null,
+                    bookingId: null,
+                },
+            }),
+        ]);
+
+    console.log(
+        `Freed ${updateSeatsResult.count} expired seat(s); ` +
+        `deleted ${deleteBookingsResult.count} booking(s) ` +
+        `and ${deletePaymentsResult.count} payment record(s).`
+    );
+
+    return updateSeatsResult.count;
 }
