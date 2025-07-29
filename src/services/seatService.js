@@ -96,29 +96,35 @@ const findAvailableSeats = async(tripId, db = prisma) => {
     return availableSeats;
 }
 // Reserve a seat for 5 minutes - no Redis Lock used
-const reserveSeat = async({tripId, seatId}, db = prisma) => {
+const reserveSeat = async({tripId, seatId, bookingToken}, db = prisma) => {
     const now = new Date();
     const expiryCutoff = new Date(now.getTime() - SEAT_HOLD_MS);
     const seatIds = Array.isArray(seatId) ? seatId : [seatId];
     console.log("Twice:", seatId, tripId);
-    
+
+    await db.seat.updateMany({
+        where: {
+            tripId,
+            status: 'RESERVED',
+            reservedAt: { not: null, lt: expiryCutoff }
+        },
+        data: {
+            status: 'AVAILABLE',
+            reservedAt: null,
+            bookingToken: null
+        }
+    })    
 
     const updated = await db.seat.updateMany({
         where: {
             id: { in: seatIds }, 
             tripId,
-            OR: [
-                { status: 'AVAILABLE' },
-                {
-                    status: 'RESERVED',
-                    reservedAt: { not: null, lt: expiryCutoff } 
-                }
-            ],
-            NOT: { status: 'BOOKED' }
+            status: 'AVAILABLE'
         },
         data: {
             status: 'RESERVED',
-            reservedAt: now
+            reservedAt: now,
+            bookingToken,
         }
     }); 
 
@@ -130,7 +136,7 @@ const reserveSeat = async({tripId, seatId}, db = prisma) => {
 }
 
 // Reserve a seat for 5 minutes - using Redis Lock
-const reserveSeatWithLock = async ( {tripId, seatId }, db = prisma) => {
+const reserveSeatWithLock = async ( {tripId, seatId, bookingToken }, db = prisma) => {
     const lockKey = `lock:trip:${tripId}:seat:${seatId}`;
     const lockTimeout = SEAT_HOLD_MS; // 5 minutes
     const acquired = await redis.set(lockKey, 'locked', 'PX', lockTimeout, 'NX');
@@ -154,7 +160,7 @@ const reserveSeatWithLock = async ( {tripId, seatId }, db = prisma) => {
                 ],
                 NOT: { status: 'BOOKED' }
             },
-            data: { status: 'RESERVED', reservedAt: now }
+            data: { status: 'RESERVED', reservedAt: now, bookingToken }
         });
 
         if (updated.count === 0) {

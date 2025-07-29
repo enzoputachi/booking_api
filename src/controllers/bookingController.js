@@ -8,6 +8,7 @@ const handleCreateBookingDraft = async(req, res) => {
         const contactHash  = await hashContact(email, mobile)        
 
         const draftPaylod = { email, mobile, contactHash, ...rest };
+        
         // console.log("booking response:", draftPaylod);
         const booking = await createBookingDraft(draftPaylod);
 

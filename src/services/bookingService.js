@@ -105,15 +105,6 @@ const getAllBookings = async(
     return bookings;
 }
 
-const confirmBooking = async(bookingId, db = prisma) => {
-    const confirmed = await db.booking.update({
-        where: { id: bookingId },
-        data: { status: BookingStatus.CONFIRMED }
-    })
-
-    return confirmed;
-}
-
 /**
  * Enhanced updateBookingService with automatic seat assignment logic
  * @param {string|number} identifier - booking token (string) or booking id (number)
@@ -262,32 +253,6 @@ const updateBookingService = async (identifier, updateData, options = {}, db = p
   });
 };
 
-const updateBookingServiceOld = async (identifier, updateData, db = prisma) => {
-  const whereClause = typeof identifier === 'string'
-    ? { bookingToken: identifier }
-    : { id: identifier };
-
-  // Avoid updating immutable fields explicitly
-  const { id, bookingToken, createdAt, updatedAt, ...safeUpdateData } = updateData;
-
-  const updatedBooking = await db.booking.update({
-    where: whereClause,
-    data: safeUpdateData,   // Prisma updates updatedAt automatically
-    include: {
-      trip: {
-        include: {
-          route: true,
-          bus: true,
-        }
-      },
-      seat: true,
-      payment: true,
-    }
-  });
-
-  return updatedBooking;
-};
-
 // ================================================ //
 //                      USER-FACING FEATURES       //
 //================================================ //
@@ -297,27 +262,20 @@ const createBookingDraft = async(draftPaylod) => {
 
     return await prisma.$transaction(async (tx) => {
         await validateBookableTrip(tripId, tx);
-        await reserveSeat({tripId, seatId}, tx);
+        const bookingToken = await generateUniqueBookingToken();
+        await reserveSeat({tripId, seatId, bookingToken}, tx);
         const bookingDraft = await tx.booking.create({
           data: {
             ...rest,
             tripId,
             status: BookingStatus.PENDING, // ← set your draft status
-            bookingToken: await generateUniqueBookingToken(),
+            bookingToken,
           },
         });
         // const
         return bookingDraft;
     })
 }
-
-// const confirmBookingDraft = async({bookingId, seatIds}, db = prisma) => {
-
-//     return db.$transaction( async(tx) => {
-//         await confirmBooking(bookingId, tx);
-//         await confirmSeat(seatIds, tx)
-//     })
-// }
 
 /**
  * Confirms a PENDING booking: marks it CONFIRMED and attaches the seats.

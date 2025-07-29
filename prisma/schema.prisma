@@ -124,6 +124,7 @@ model Seat {
   reservedAt  DateTime? // ⌛used for expiration logic
   booking Booking?    @relation(fields: [bookingId], references: [id])
   reservation SeatReservation? // Current reservation if any
+  bookingToken String?
   
   @@unique([seatNo, tripId]) // composite uniqueness
   @@index([tripId, status])

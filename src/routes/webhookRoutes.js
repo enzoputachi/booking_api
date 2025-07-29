@@ -3,6 +3,6 @@ import { handlePaystackWebhook } from '../controllers/paystackWebhookController.
 
 const router = express.Router();
 
-router.post('/webhook', handlePaystackWebhook);
+router.post('/', handlePaystackWebhook);
 
 export default router;
