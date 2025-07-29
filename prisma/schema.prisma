@@ -101,6 +101,19 @@ model Bus {
   trips     Trip[]
 }
 
+model SeatReservation {
+  id             Int      @id @default(autoincrement())
+  seatId         Int
+  bookingToken   String   // Links to booking before payment
+  reservedAt     DateTime @default(now())
+  expiresAt      DateTime
+  status         String   @default("PENDING") // PENDING, CONFIRMED, EXPIRED
+  seat           Seat     @relation(fields: [seatId], references: [id])
+  
+  @@unique([seatId]) // One reservation per seat
+  @@index([expiresAt])
+}
+
 model Seat {
   id      Int     @id @default(autoincrement())
   bookingId  Int? 
@@ -110,6 +123,8 @@ model Seat {
   tripId  Int
   reservedAt  DateTime? // ⌛used for expiration logic
   booking Booking?    @relation(fields: [bookingId], references: [id])
+  reservation SeatReservation? // Current reservation if any
+  
   @@unique([seatNo, tripId]) // composite uniqueness
   @@index([tripId, status])
 }

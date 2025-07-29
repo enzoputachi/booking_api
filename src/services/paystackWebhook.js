@@ -1,7 +1,7 @@
 import crypto from "crypto";
-import { Request } from "express";
+// import { Request } from "express";
 import dotenv from "dotenv";
-import pathFinder from "./../utils/pathFinder.js";
+import pathFinder from "../utils/pathFinder.js";
 dotenv.config();
 pathFinder();
 
@@ -40,3 +40,9 @@ const processPaymentEvent = async (paymentData) => {
     throw error; 
   }
 };
+
+
+export {
+  verifySignature,
+  processPaymentEvent
+}

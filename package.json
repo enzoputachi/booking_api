@@ -9,7 +9,7 @@
     "push": "prisma db push",
     "prepare": "npm run migrate",
     "baseline": "prisma migrate resolve --applied \"20250721155132_init\"",
-    "clear": "prisma migrate reset --force",
+    "clear": "prisma migrate reset",
     "studio": "prisma studio",
     "dev": "nodemon src/server.js",
     "start": "npm run migrate && node src/server.js"

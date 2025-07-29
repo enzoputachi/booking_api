@@ -12,7 +12,8 @@ import streamTicketPDFRouter from './ticketRoute.js'
 import retrieveBookingRouter from './retrieveBookingRoute.js';
 import supportRoute from './supportRoute.js';
 import exportBookingRouter from './exportBookingRoute.js';
-import freeExpiredRouter from './freeSeatsRoute.js'
+import freeExpiredRouter from './freeSeatsRoute.js';
+import webhookRouter from './webhookRoutes.js'
 
 
 const router = express.Router();
@@ -22,14 +23,15 @@ router.use('/buses', busRouter);
 router.use('/routes', routeRouter);
 router.use('/trips', tripRouter);
 router.use('/seats', seatRouter);
-router.use('/bookings', bookingRouter)
-router.use('/payments', paymentRoute)
+router.use('/bookings', bookingRouter);
+router.use('/payments', paymentRoute);
 router.use('/companySettings', settingsRouter)
 router.use('/dashboardStats', dashboardStatsRouter);
 router.use('/tickets', streamTicketPDFRouter);
 router.use('/retrieve', retrieveBookingRouter);
-router.use('/support', supportRoute)
-router.use('/export', exportBookingRouter)
-router.use('/freeExpired', freeExpiredRouter)
+router.use('/support', supportRoute);
+router.use('/export', exportBookingRouter);
+router.use('/freeExpired', freeExpiredRouter);
+router.use('/webhook', webhookRouter);
 
 export default router;
