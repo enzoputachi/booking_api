@@ -65,8 +65,12 @@ const handleGetBookingByToken = async(req, res) => {
 }
 
 const handleUpdateBooking = async (req, res) => {
-  // Note camelCase here
-  const { bookingToken, ...updateData } = req.body;
+  const {
+    bookingToken,
+    autoAssignSeats = true,
+    requiredSeats = 1,
+    ...updateData
+  } = req.body;
 
   if (!bookingToken) {
     return res.status(400).json({ message: "Missing bookingToken" });
@@ -77,7 +81,11 @@ const handleUpdateBooking = async (req, res) => {
   }
 
   try {
-    const updatedBooking = await updateBookingService(bookingToken, updateData);
+    const updatedBooking = await updateBookingService(
+      bookingToken,
+      updateData,
+      { autoAssignSeats, requiredSeats }
+    );
     return res.status(200).json({
       status: "success",
       data: updatedBooking,
