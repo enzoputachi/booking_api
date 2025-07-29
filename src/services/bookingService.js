@@ -114,6 +114,32 @@ const confirmBooking = async(bookingId, db = prisma) => {
     return confirmed;
 }
 
+const updateBookingService = async (identifier, updateData, db = prisma) => {
+  const whereClause = typeof identifier === 'string'
+    ? { bookingToken: identifier }
+    : { id: identifier };
+
+  // Avoid updating immutable fields explicitly
+  const { id, bookingToken, createdAt, updatedAt, ...safeUpdateData } = updateData;
+
+  const updatedBooking = await db.booking.update({
+    where: whereClause,
+    data: safeUpdateData,   // Prisma updates updatedAt automatically
+    include: {
+      trip: {
+        include: {
+          route: true,
+          bus: true,
+        }
+      },
+      seat: true,
+      payment: true,
+    }
+  });
+
+  return updatedBooking;
+};
+
 // ================================================ //
 //                      USER-FACING FEATURES       //
 //================================================ //
@@ -247,5 +273,5 @@ export {
     confirmBookingDraft,
     getbookingByToken,
     getAllBookings,
-
+    updateBookingService,
 }

@@ -53,7 +53,6 @@ const createPaymentIntent = async({bookingId, amount, channel, seatIds, email}, 
     return payment;
 }
 
-
 const verifyPayment = async(paystackRef, db= prisma) => {
 
     const payment = await db.payment.findUnique({
@@ -149,6 +148,7 @@ const getPaymentById = async(id, db = prisma) => {
 }
 
 
+
 // 4. Get payment by Paystack reference
 export const getPaymentByRef = async (paystackRef, db = prisma) => {
   return db.payment.findUnique({ where: { paystackRef } });
@@ -172,9 +172,55 @@ export const listPaymentsForBooking = async (bookingId, db = prisma) => {
 }
 
 
+const updatePaymentService = async (identifier, updateData, db = prisma) => {
+  // Avoid updating immutable fields explicitly
+  const { id, bookingToken, createdAt, updatedAt, ...safeUpdateData } = updateData;
+  
+  const whereClause = typeof identifier === 'string'
+    ? { bookingToken: identifier }
+    : { id: identifier };
+
+  // Step 1: Find the payment first
+  const payment = await db.payment.findFirst({
+    where: {
+      booking: whereClause
+    }
+  });
+
+  if (!payment) {
+    throw new Error('Payment not found for the given booking');
+  }
+
+  // Step 2: Update using the payment ID
+  const updatedPayment = await db.payment.update({
+    where: {
+      id: payment.id  // Use actual payment ID
+    },
+    data: safeUpdateData,
+    include: {
+      booking: {
+        include: {
+          trip: {
+            include: {
+              route: true,
+              bus: true,
+            }
+          },
+          seat: true,
+          payment: true,
+        }
+      }
+    }
+  });
+
+  return updatedPayment;
+};
+
+
 export {
     createPaymentIntent,
     verifyPayment,
     getPaymentById,
     getAllPayments,
+    updatePaymentService
 }
