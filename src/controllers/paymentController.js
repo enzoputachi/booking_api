@@ -1,5 +1,5 @@
 import { processBookingPaymentAndIssueTicket } from "../services/bookingOrchestrator.js";
-import { createPaymentIntent, getAllPayments, verifyPayment } from "../services/paymentService.js";
+import { createPaymentIntent, getAllPayments, updatePaymentService, verifyPayment } from "../services/paymentService.js";
 import { sendEmail } from "../services/mailService.js";
 import prisma from "../models/index.js";
 import dotenv from 'dotenv';
@@ -105,8 +105,36 @@ const handleGetAllPayments = async(req, res) => {
     }
 }
 
+
+const handleUpdatePayment = async (req, res) => {
+  const { bookingToken, ...updateData } = req.body;
+
+  if (!bookingToken) {
+    return res.status(400).json({ message: "Missing bookingToken" });
+  }
+
+  if (Object.keys(updateData).length === 0) {
+    return res.status(400).json({ message: "No update data provided" });
+  }
+
+  try {
+    const updatedPayment = await updatePaymentService(bookingToken, updateData);
+    return res.status(200).json({
+      status: "success",
+      data: updatedPayment,
+    });
+  } catch (error) {
+    console.error("Error updating payment:", error.message);
+    return res.status(500).json({
+      message: "Error updating payment",
+      error: error.message,
+    });
+  }
+};
+
 export {
     handlePaymentIntent,
     handleVerifyPayment,
     handleGetAllPayments,
+    handleUpdatePayment
 }

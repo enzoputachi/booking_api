@@ -1,4 +1,4 @@
-import { createBookingDraft, getAllBookings, getbookingByToken, listBooking, retrieveBooking } from "../services/bookingService.js";
+import { createBookingDraft, getAllBookings, getbookingByToken, listBooking, retrieveBooking, updateBookingService } from "../services/bookingService.js";
 import { hashContact } from "../utils/bookingUtils.js";
 
 
@@ -64,6 +64,33 @@ const handleGetBookingByToken = async(req, res) => {
     }
 }
 
+const handleUpdateBooking = async (req, res) => {
+  // Note camelCase here
+  const { bookingToken, ...updateData } = req.body;
+
+  if (!bookingToken) {
+    return res.status(400).json({ message: "Missing bookingToken" });
+  }
+
+  if (Object.keys(updateData).length === 0) {
+    return res.status(400).json({ message: "No update data provided" });
+  }
+
+  try {
+    const updatedBooking = await updateBookingService(bookingToken, updateData);
+    return res.status(200).json({
+      status: "success",
+      data: updatedBooking,
+    });
+  } catch (error) {
+    console.error("Error updating booking:", error.message);
+    return res.status(500).json({
+      message: "Error updating booking",
+      error: error.message,
+    });
+  }
+};
+
 export const handleConfirmBookingByToken = async (req, res) => {
     const { bookingToken } = req.query;
     console.log("Booking details:", bookingToken)
@@ -85,4 +112,5 @@ export {
     handleCreateBookingDraft,
     handleListBookings,
     handleGetBookingByToken,
+    handleUpdateBooking,
 }
