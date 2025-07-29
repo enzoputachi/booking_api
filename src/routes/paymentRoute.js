@@ -1,5 +1,5 @@
 import express from 'express';
-import {  handleGetAllPayments, handlePaymentIntent, handleVerifyPayment } from '../controllers/paymentController.js';
+import {  handleGetAllPayments, handlePaymentIntent, handleUpdatePayment, handleVerifyPayment } from '../controllers/paymentController.js';
 import { authenticate } from '../middlewares/auth.js';
 
 const router = express.Router();
@@ -81,6 +81,8 @@ router.post('/initialize', handlePaymentIntent);
  *         description: Internal server error
  */
 router.post('/verify', handleVerifyPayment);
+
+router.patch('/', handleUpdatePayment)
 
 /**
  * @swagger
