@@ -5,5 +5,5 @@
 
 */
 -- AlterTable
-ALTER TABLE `seat` DROP COLUMN `bookingtoken`,
+ALTER TABLE `Seat` DROP COLUMN `bookingtoken`,
     ADD COLUMN `bookingToken` VARCHAR(191) NULL;

@@ -297,9 +297,18 @@ const confirmBookingDraft = async ({ bookingId, seatIds }, db = prisma) => {
 
     if (!booking) throw new Error("Booking not found");
 
+    // If already confirmed, just return the booking
+    if (booking.status === BookingStatus.CONFIRMED) {
+      console.log("Booking already confirmed, skipping seat updates");
+      return tx.booking.findUnique({
+        where: { id: bookingId },
+        include: { seat: true, trip: { include: { route: true, bus: true } } },
+      });
+    }
+
     await tx.booking.update({
       where: { id: bookingId },
-      data: { status: BookingStatus.CONFIRMED },
+      data: { status: BookingStatus.CONFIRMED }, // 
     });
 
     // console.log("SEAT IDS To Confimr:", seatIds)

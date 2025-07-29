@@ -1,2 +1,2 @@
 -- AlterTable
-ALTER TABLE `seat` ADD COLUMN `bookingtoken` VARCHAR(191) NULL;
+ALTER TABLE `Seat` ADD COLUMN `bookingtoken` VARCHAR(191) NULL;

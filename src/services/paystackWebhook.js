@@ -3,6 +3,7 @@ import crypto from "crypto";
 import dotenv from "dotenv";
 import pathFinder from "../utils/pathFinder.js";
 import prisma from "../models/index.js";
+import { confirmBookingDraft } from "./bookingService.js";
 dotenv.config();
 pathFinder();
 
@@ -100,19 +101,8 @@ const processPaymentEvent = async (paymentData) => {
     });
 
     // Complete booking if fully paid
-    if (isPaymentComplete) {
-      await prisma.seat.updateMany({
-        where: { id: { in: seatIds } },
-        data: { 
-          status: 'BOOKED', 
-          bookingId: booking.id,
-          // Optional: Clear bookingToken since it's now confirmed
-          bookingToken: null 
-        },
-      });
-      
-      await confirmBookingDraft({ bookingId: booking.id, seatIds });
-    }
+    await confirmBookingDraft({ bookingId: booking.id, seatIds });
+
 
     return updatedBooking;
   } catch (error) {
@@ -129,29 +119,7 @@ export {
 
 
 
-async function cleanupExpiredReservations(prisma) {
-  const now = new Date();
 
-  const expiredReservations = await prisma.seatReservation.findMany({
-    where: {
-      status: 'PENDING',
-      expiresAt: { lt: now },
-    },
-  });
-
-  for (const res of expiredReservations) {
-    await prisma.$transaction(async (tx) => {
-      await tx.seatReservation.update({
-        where: { id: res.id },
-        data: { status: 'EXPIRED' },
-      });
-      await tx.seat.update({
-        where: { id: res.seatId },
-        data: { status: 'AVAILABLE' },
-      });
-    });
-  }
-}
 
 // Call cleanupExpiredReservations() before seat allocation or seat lookup
 

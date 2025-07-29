@@ -5,6 +5,7 @@ import prisma from "../models/index.js";
 import dotenv from 'dotenv';
 import pathFinder from "../utils/pathFinder.js";
 import { validateSeatHold } from "../utils/bookingUtils.js";
+import { validateBookingExists, validatePaymentAmount, validateSeatAvailability } from "../utils/paymentUtils.js";
 dotenv.config();
 pathFinder()
 
@@ -22,6 +23,14 @@ const handlePaymentIntent = async(req, res) => {
 
     try {
 
+        const booking = await validateBookingExists(bookingId);
+
+         // Validate seat availability
+        await validateSeatAvailability(seatIds, bookingId);
+
+              // Validate payment amount
+        const paymentInfo = await validatePaymentAmount(booking, seatIds, amount);
+
         if (typeof isSplitPayment === 'boolean') {
             await prisma.booking.update({
                 where: { id: bookingId },
@@ -36,7 +45,8 @@ const handlePaymentIntent = async(req, res) => {
         res.status(201).json({
             meaasage: 'Transaction initialized',
             status: 'success',
-            data: payment
+            data: payment,
+            paymentInfo
         })
     } catch (error) {
         console.error('Paystack Init Error:', error?.response?.data || error.message);
