@@ -1,5 +1,5 @@
 import prisma from "../models/index.js";
-import { findSeat, updateSeatStatus, validateSeatHold } from '../utils/bookingUtils.js';
+import { assignSeatsToBookingHelper, findSeat, releaseSeatsHelper, updateSeatStatus, validateSeatHold } from '../utils/bookingUtils.js';
 import { confirmSeat, reserveSeat } from "./seatService.js";
 import { validateBookableTrip } from "./tripService.js";
 import { BookingStatus } from './../../prisma/src/generated/prisma/index.js';
@@ -114,7 +114,155 @@ const confirmBooking = async(bookingId, db = prisma) => {
     return confirmed;
 }
 
-const updateBookingService = async (identifier, updateData, db = prisma) => {
+/**
+ * Enhanced updateBookingService with automatic seat assignment logic
+ * @param {string|number} identifier - booking token (string) or booking id (number)
+ * @param {Object} updateData - data to update
+ * @param {Object} options - additional options
+ * @param {boolean} options.autoAssignSeats - whether to auto-assign seats when confirming
+ * @param {number} options.requiredSeats - number of seats to assign (default: 1)
+ * @param {Object} db - database client (for testing)
+ * @returns {Object} - updated booking with seats
+ */
+const updateBookingService = async (identifier, updateData, options = {}, db = prisma) => {
+  const { autoAssignSeats = true, requiredSeats = 1 } = options;
+  
+  const whereClause = typeof identifier === 'string'
+    ? { bookingToken: identifier }
+    : { id: identifier };
+
+  // Avoid updating immutable fields explicitly
+  const { id, bookingToken, createdAt, updatedAt, ...safeUpdateData } = updateData;
+
+  // Use transaction to ensure data consistency
+  return await db.$transaction(async (tx) => {
+    
+    // 1. First, get the current booking to check status changes
+    const currentBooking = await tx.booking.findUnique({
+      where: whereClause,
+      include: {
+        trip: {
+          include: {
+            route: true,
+            bus: true,
+          }
+        },
+        seat: true,
+        payment: true,
+      }
+    });
+
+    if (!currentBooking) {
+      throw new Error(`Booking not found with identifier: ${JSON.stringify(identifier)}`);
+    }
+
+    // 2. Update the booking first
+    const updatedBooking = await tx.booking.update({
+      where: whereClause,
+      data: safeUpdateData,   // Prisma updates updatedAt automatically
+      include: {
+        trip: {
+          include: {
+            route: true,
+            bus: true,
+          }
+        },
+        seat: true,
+        payment: true,
+      }
+    });
+
+    // 3. Handle status-based logic for seat assignment/release
+    const oldStatus = currentBooking.status;
+    const newStatus = updatedBooking.status;
+
+    // Scenario 1: Booking is being confirmed and needs seat assignment
+    if (autoAssignSeats && newStatus === 'CONFIRMED' && oldStatus !== 'CONFIRMED') {
+      console.log(`Auto-assigning seats for confirmed booking: ${updatedBooking.bookingToken}`);
+      
+      try {
+        const assignedSeats = await assignSeatsToBookingHelper(updatedBooking, requiredSeats, tx);
+        console.log(`Successfully assigned seats: ${assignedSeats.join(', ')}`);
+        
+        // Create activity log for confirmation
+        await tx.bookingLog.create({
+          data: {
+            bookingId: updatedBooking.id,
+            action: 'BOOKING_CONFIRMED_BY_ADMIN',
+            metadata: {
+              previousStatus: oldStatus,
+              newStatus: newStatus,
+              assignedSeats: assignedSeats,
+              autoAssigned: true
+            }
+          }
+        });
+        
+      } catch (seatError) {
+        console.error('Seat assignment failed:', seatError.message);
+        // You can choose to either throw the error or continue without seats
+        // For now, we'll throw to maintain data integrity
+        throw new Error(`Booking confirmed but seat assignment failed: ${seatError.message}`);
+      }
+    }
+
+    // Scenario 2: Booking is being cancelled - release seats
+    if (newStatus === 'CANCELLED' && oldStatus !== 'CANCELLED') {
+      console.log(`Releasing seats for cancelled booking: ${updatedBooking.bookingToken}`);
+      await releaseSeatsHelper(updatedBooking, tx);
+      
+      // Create activity log for cancellation
+      await tx.bookingLog.create({
+        data: {
+          bookingId: updatedBooking.id,
+          action: 'BOOKING_CANCELLED_BY_ADMIN',
+          metadata: {
+            previousStatus: oldStatus,
+            newStatus: newStatus,
+            seatsReleased: updatedBooking.seat ? updatedBooking.seat.length : 0
+          }
+        }
+      });
+    }
+
+    // Scenario 3: Booking is being moved from confirmed to pending/draft - release seats
+    if (oldStatus === 'CONFIRMED' && ['PENDING', 'DRAFT'].includes(newStatus)) {
+      console.log(`Releasing seats for downgraded booking: ${updatedBooking.bookingToken}`);
+      await releaseSeatsHelper(updatedBooking, tx);
+      
+      await tx.bookingLog.create({
+        data: {
+          bookingId: updatedBooking.id,
+          action: 'BOOKING_STATUS_DOWNGRADED',
+          metadata: {
+            previousStatus: oldStatus,
+            newStatus: newStatus,
+            reason: 'Status changed from confirmed to pending/draft'
+          }
+        }
+      });
+    }
+
+    // 4. Fetch the final updated booking with all relationships
+    const finalBooking = await tx.booking.findUnique({
+      where: whereClause,
+      include: {
+        trip: {
+          include: {
+            route: true,
+            bus: true,
+          }
+        },
+        seat: true,
+        payment: true,
+      }
+    });
+
+    return finalBooking;
+  });
+};
+
+const updateBookingServiceOld = async (identifier, updateData, db = prisma) => {
   const whereClause = typeof identifier === 'string'
     ? { bookingToken: identifier }
     : { id: identifier };
