@@ -17,7 +17,7 @@ const createPaymentIntent = async({bookingId, amount, channel, seatIds, email}, 
     // if (booking.payment) throw new Error('Payment already exists for this bookinf');
 
      if (!seatIds || !Array.isArray(seatIds) || seatIds.length === 0) {
-        throw new Error('No seat IDs provided');
+        throw new Error('No seat provided');
     }
 
     const seatsInTrip = await db.seat.findMany({
