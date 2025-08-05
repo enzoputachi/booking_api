@@ -25,10 +25,10 @@ const handlePaymentIntent = async(req, res) => {
 
         const booking = await validateBookingExists(bookingId);
 
-         // Validate seat availability
+        // Validate seat availability
         await validateSeatAvailability(seatIds, bookingId);
 
-              // Validate payment amount
+        // Validate payment amount
         const paymentInfo = await validatePaymentAmount(booking, seatIds, amount);
 
         if (typeof isSplitPayment === 'boolean') {
