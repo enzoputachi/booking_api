@@ -217,10 +217,25 @@ const updatePaymentService = async (identifier, updateData, db = prisma) => {
 };
 
 
+/**
+ * ADMIN
+ */
+
+const adminCreatePayment = async(paymentData, db = prisma) => {
+
+  const payment = db.payment.create({
+    data: paymentData
+  })
+
+  return payment;
+}
+
+
 export {
     createPaymentIntent,
     verifyPayment,
     getPaymentById,
     getAllPayments,
-    updatePaymentService
+    updatePaymentService,
+    adminCreatePayment
 }
