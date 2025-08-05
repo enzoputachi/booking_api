@@ -4,7 +4,7 @@ import exportBookingsAsCVS from "../services/bookingExportService.js";
 
 
 export  const handleExportBookings = async (req, res) => {
-    console.log("Endpoint hit");
+    console.log("Endpoint hit", );
     
   try {
     // Validation
@@ -12,7 +12,8 @@ export  const handleExportBookings = async (req, res) => {
       startDate: req.query.startDate,
       endDate: req.query.endDate,
       status: req.query.status,
-      tripId: req.query.tripId
+      tripId: req.query.tripId,
+      busPlateNo: req.query.busPlateNo
     };
 
     // Generate CSV (much simpler now!)
