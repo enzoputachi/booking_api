@@ -1,3 +1,4 @@
+import { adminBookingOrch } from "../services/bookingOrchestrator.js";
 import { createBookingDraft, getAllBookings, getbookingByToken, listBooking, retrieveBooking, updateBookingService } from "../services/bookingService.js";
 import { hashContact } from "../utils/bookingUtils.js";
 
@@ -19,9 +20,7 @@ const handleCreateBookingDraft = async(req, res) => {
             status: "success",
             data: booking,
         });
-    } catch (error) {
-        console.log("Request body:", req.body);
-        
+    } catch (error) {       
         console.error("Error creating booking:", error.message);
         res.status(500).json({
         message: "Booking creation failed:",
@@ -102,7 +101,6 @@ const handleUpdateBooking = async (req, res) => {
 
 export const handleConfirmBookingByToken = async (req, res) => {
     const { bookingToken } = req.query;
-    console.log("Booking details:", bookingToken)
 
     try {
       const booking = await retrieveBooking(bookingToken);
@@ -117,9 +115,30 @@ export const handleConfirmBookingByToken = async (req, res) => {
     }
 }
 
+const handleAdminCreateBooking = async(req, res) => {
+  const bookingData = req.body;
+  console.log('Admin booking Payload:', bookingData);
+  
+  try {
+    const booking = await adminBookingOrch(bookingData);
+    res.status(200).json({
+      message: "Booking created successfully ",
+      status: "success",
+      data: booking,
+    })
+  } catch (error) {   
+    console.error("Error creating booking:", error.message);
+    res.status(500).json({
+    message: "Booking creation failed:",
+    error: error.message,
+    });
+  }
+}
+
 export {
     handleCreateBookingDraft,
     handleListBookings,
     handleGetBookingByToken,
     handleUpdateBooking,
+    handleAdminCreateBooking
 }

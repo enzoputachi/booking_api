@@ -1,6 +1,6 @@
 import prisma from "../models/index.js";
-import { assignSeatsToBookingHelper, findSeat, releaseSeatsHelper, updateSeatStatus, validateSeatHold } from '../utils/bookingUtils.js';
-import { confirmSeat, reserveSeat } from "./seatService.js";
+import { assignSeatsToBookingHelper, findSeat, hashContact, releaseSeatsHelper, updateSeatStatus, validateSeatHold } from '../utils/bookingUtils.js';
+import { reserveSeat } from "./seatService.js";
 import { validateBookableTrip } from "./tripService.js";
 import { BookingStatus } from './../../prisma/src/generated/prisma/index.js';
 import { generateUniqueBookingToken } from "../utils/bookingToken.js";
@@ -12,12 +12,16 @@ import { SEAT_HOLD_MS } from "../../config/booking.js";
 //                      CORE FEATURES               //
 //================================================= //
 
-const createBooking = async(bookingData, db = prisma) => {
+const adminCreateBooking = async(bookingData, db = prisma) => {
     const bookingToken = await generateUniqueBookingToken();
+    const { seatId, ...bookingOnlyData } = bookingData;
+    const contactHash = await hashContact(bookingData.mobile)
     const booking = await db.booking.create({ 
         data: {
-            ...bookingData,
+            ...bookingOnlyData,
             bookingToken,
+            contactHash,
+            status: 'CONFIRMED',
         },
      });
 
@@ -311,7 +315,7 @@ const confirmBookingDraft = async ({ bookingId, seatIds }, db = prisma) => {
       data: { status: BookingStatus.CONFIRMED }, // 
     });
 
-    // console.log("SEAT IDS To Confimr:", seatIds)
+    // console.log("SEAT IDS To Confirm:", seatIds)
     const seatsToUpdate = await tx.seat.findMany({
       where: { id: { in: seatIds } },
       select: { id: true, status: true, bookingId: true },
@@ -354,6 +358,7 @@ export const retrieveBooking = async (bookingToken) => {
                     bus: true,
                 },
             },
+            seat: true,
             payment: {
                 where: { status: 'PAID' },
                 orderBy: { createdAt: "desc"}
@@ -389,4 +394,5 @@ export {
     getbookingByToken,
     getAllBookings,
     updateBookingService,
+    adminCreateBooking
 }

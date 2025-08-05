@@ -2,10 +2,11 @@
 import { SeatStatus } from '../../prisma/src/generated/prisma/index.js';
 import prisma from '../models/index.js';
 import pathFinder from '../utils/pathFinder.js';
-import { confirmBookingDraft } from './bookingService.js';
-import { verifyPayment } from './paymentService.js';
+import { adminCreateBooking, confirmBookingDraft } from './bookingService.js';
+import { adminCreatePayment, verifyPayment } from './paymentService.js';
 import { generateTicketPDF } from './pdfService.js';
 import dotenv from 'dotenv';
+import { confirmSeat } from './seatService.js';
 dotenv.config()
 
 pathFinder();
@@ -81,7 +82,7 @@ export const processBookingPaymentAndIssueTicket = async({ paystackRef, seatIds}
     });
 
     console.log(
-      "Testing amountDue",
+      "About to confirm booking",
       {
       seatCount,
       pricePerSeat,
@@ -94,3 +95,21 @@ export const processBookingPaymentAndIssueTicket = async({ paystackRef, seatIds}
 
     return updatedBooking;
 }
+
+export const adminBookingOrch = async (bookingData) => {
+  return await prisma.$transaction(async (tx) => {
+    const booking = await adminCreateBooking(bookingData, tx);
+    const amountPaidKobo = (booking.amountPaid * 100)
+    const paymentData = {
+      bookingId: booking.id,
+      amount: amountPaidKobo,
+      status: "PAID",
+      channel: "admin",
+      customerId: booking.email,
+      paidAt: new Date().toISOString()
+    };
+    await confirmSeat({ seatIds: bookingData.seatId, bookingId: booking.id, bookingToken: booking.bookingToken }, tx)
+    const payment = await adminCreatePayment(paymentData, tx);
+    return { booking, payment };
+  });
+};

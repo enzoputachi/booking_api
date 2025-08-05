@@ -1,5 +1,5 @@
 import express from 'express';
-import { handleConfirmBookingByToken, handleCreateBookingDraft, handleGetBookingByToken, handleListBookings, handleUpdateBooking } from '../controllers/bookingController.js';
+import { handleAdminCreateBooking, handleConfirmBookingByToken, handleCreateBookingDraft, handleGetBookingByToken, handleListBookings, handleUpdateBooking } from '../controllers/bookingController.js';
 
 
 const router = express.Router();
@@ -84,6 +84,7 @@ const router = express.Router();
  *         description: Internal server error
  */
 router.post('/', handleCreateBookingDraft);
+router.post('/adminCreate', handleAdminCreateBooking)
 
 router.get('/', handleListBookings)
 
