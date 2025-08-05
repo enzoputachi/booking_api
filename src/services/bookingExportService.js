@@ -49,6 +49,18 @@ const buildWhereClause = (filters) => {
   if (filters.endDate) where.createdAt = { ...where.createdAt, lte: new Date(filters.endDate) };
   if (filters.status) where.status = filters.status;
   if (filters.tripId) where.tripId = parseInt(filters.tripId);
+
+  // Bus plate number filter - nested filter through trip relation
+  if (filters.busPlateNo) {
+    where.trip = {
+      ...where.trip,
+      bus: {
+        plateNo: {
+          contains: filters.busPlateNo,
+        }
+      }
+    };
+  }
   return where;
 };
 
