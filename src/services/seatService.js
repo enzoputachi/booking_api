@@ -174,12 +174,26 @@ const reserveSeatWithLock = async ( {tripId, seatId, bookingToken }, db = prisma
 }
 
 
-const confirmSeat = async(seatIds, db = prisma) => {
+const confirmSeat = async({ seatIds, bookingId, bookingToken }, db = prisma) => {
     const validatedSeatIds = Array.isArray(seatIds) ? seatIds : [seatIds]
-    return await db.seat.updateMany({
-        where: { id: { in: validatedSeatIds } },
-        data: { status: SeatStatus.BOOKED }
+    const updatedSeats = await db.seat.updateMany({
+        where: { 
+            id: { in: validatedSeatIds },
+            status: 'AVAILABLE',
+            bookingId: null
+        },
+        data: { 
+            status: SeatStatus.BOOKED,
+            bookingId: bookingId,
+            bookingToken: bookingToken
+        }
     })
+
+    if (updatedSeats.count === 0) {
+      throw new Error("No available seats found to confirm");
+    }
+
+  return updatedSeats.count;
 }
 
 // ================================================ //
